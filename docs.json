@@ -7,45 +7,39 @@
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#18181B",
-    "light": "#71717A",
-    "dark": "#FAFAFA"
+    "primary": "#0817EC",
+    "light": "#0817EC",
+    "dark": "#0817EC"
   },
   "topbarCtaButton": {
     "name": "Dashboard",
     "url": "https://dashboard.rastro.ai"
   },
-  "navigation": [
-    {
-      "group": "",
-      "pages": [
-        "quickstart",
-        "authentication"
-      ]
-    },
-    {
-      "group": "Flows",
-      "pages": [
-        "flows/overview",
-        "flows/execute",
-        "flows/status"
-      ]
-    },
-    {
-      "group": "Enrich",
-      "pages": [
-        "enrich/overview"
-      ]
-    },
-    {
-      "group": "Catalogs",
-      "pages": [
-        "catalogs/overview",
-        "catalogs/items",
-        "catalogs/bulk"
-      ]
-    }
-  ],
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "API",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": ["quickstart", "authentication"]
+          },
+          {
+            "group": "Flows",
+            "pages": ["flows/overview", "flows/execute", "flows/status"]
+          },
+          {
+            "group": "Enrich",
+            "pages": ["enrich/overview"]
+          },
+          {
+            "group": "Catalogs",
+            "pages": ["catalogs/overview", "catalogs/items", "catalogs/bulk"]
+          }
+        ]
+      }
+    ]
+  },
   "api": {
     "baseUrl": "https://catalogapi.rastro.ai/api"
   }
