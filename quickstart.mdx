@@ -18,7 +18,8 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
     "output_schema": [
       {"name": "price", "type": "string", "description": "Current retail price"},
       {"name": "weight", "type": "string", "description": "Product weight with units"}
-    ]
+    ],
+    "speed": "fast"
   }'
 ```
 
@@ -31,9 +32,13 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
 }
 ```
 
+<Note>
+This example uses `"speed": "fast"` for quick results (~1 min), but it's less thorough. For most use cases, we recommend `"speed": "slow"` (5-10 min) for more comprehensive enrichment.
+</Note>
+
 ## 3. Poll for results
 
-Enrichment typically takes ~2 minutes. Query the job ID to check status:
+Query the job ID to check status:
 
 ```bash
 curl "https://catalogapi.rastro.ai/api/public/enrich/job_abc123" \
@@ -69,8 +74,12 @@ curl "https://catalogapi.rastro.ai/api/public/enrich/job_abc123" \
 
 Every enriched field includes its source URL.
 
-<Tip>
-**Want faster results?** Add `"speed": "fast"` for quicker but less thorough enrichment.
-</Tip>
+## Speed options
+
+| Speed | Time | Best for |
+|-------|------|----------|
+| `fast` | ~1 min | Quick testing, simple lookups |
+| `medium` | ~2 min | Balanced speed and quality |
+| `slow` | 5-10 min | Production, comprehensive results |
 
 -> [Enrich API reference](/enrich/quickstart)
