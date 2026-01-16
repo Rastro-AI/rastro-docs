@@ -2,6 +2,72 @@
 title: 'Enrich'
 ---
 
-Coming soon.
+Enrich catalog items with web research. Rastro scrapes the web, extracts data, and tracks sources for each field.
 
-Contact [support@rastro.ai](mailto:support@rastro.ai) for early access.
+## Start enrichment
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Find product specifications from manufacturer websites",
+    "speed": "fast"
+  }'
+```
+
+```json
+{
+  "job_id": "abc123",
+  "status": "running",
+  "poll_url": "/api/public/catalogs/{catalog_id}/enrich/abc123"
+}
+```
+
+## Check status
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}?include_results=true \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+```json
+{
+  "job_id": "abc123",
+  "status": "completed",
+  "progress": 1.0,
+  "processed_items": 10,
+  "results": [
+    {
+      "item_id": "item_xyz",
+      "all_sources": ["https://manufacturer.com/product"],
+      "fields": {
+        "description": {
+          "value": "Professional-grade widget with...",
+          "sources": ["https://manufacturer.com/product"]
+        },
+        "specifications": {
+          "value": {"weight": "2.5kg", "dimensions": "10x20x5cm"},
+          "sources": ["https://manufacturer.com/product"]
+        }
+      }
+    }
+  ]
+}
+```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `prompt` | required | What to search for |
+| `speed` | `"fast"` | `"fast"`, `"medium"`, or `"slow"` (more thorough) |
+| `item_ids` | all | Specific items to enrich |
+| `wait_for_result` | `false` | Wait for completion (max 5 min) |
+
+## Cancel
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}/cancel \
+  -H "Authorization: Bearer rastro_pk_..."
+```
