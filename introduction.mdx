@@ -23,15 +23,15 @@ description: 'Best in class e-commerce catalog enrichment.'
 Rastro is the fastest way to enrich and transform catalog data to launch products faster. Simply define the information you need and what you have, and receive it with citations.
 
 ```bash
-curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
   -H "Authorization: Bearer rastro_pk_..." \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "Find product specifications",
     "items": [{"name": "iPhone 15 Pro"}],
     "output_schema": [
-      {"name": "price_usd", "type": "number", "description": "Current retail price in USD"},
-      {"name": "weight_grams", "type": "number", "description": "Product weight in grams"}
+      {"name": "price", "type": "string", "description": "Current retail price"},
+      {"name": "weight", "type": "string", "description": "Product weight with units"}
     ]
   }'
 ```

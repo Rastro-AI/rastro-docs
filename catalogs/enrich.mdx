@@ -6,14 +6,14 @@ api: 'POST /public/catalogs/{catalog_id}/enrich'
 Start an enrichment job to enrich all items in a catalog.
 
 ```bash
-curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich \
+curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich" \
   -H "Authorization: Bearer rastro_pk_..." \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "Find product specifications",
     "output_schema": [
-      {"name": "price_usd", "type": "number", "description": "Current retail price in USD"},
-      {"name": "weight_grams", "type": "number", "description": "Product weight in grams"}
+      {"name": "price", "type": "string", "description": "Current retail price"},
+      {"name": "weight", "type": "string", "description": "Product weight with units"}
     ]
   }'
 ```
@@ -34,6 +34,7 @@ curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enric
 |-----------|----------|---------|-------------|
 | `prompt` | Yes | - | Search prompt for web enrichment |
 | `output_schema` | Yes | - | List of field definitions: `[{name, type, description}, ...]` |
+| `allowed_domains` | No | any | Restrict web sources to these domains only |
 | `speed` | No | `"medium"` | `"fast"`, `"medium"`, or `"slow"` |
 
 ## Polling for results
@@ -41,7 +42,7 @@ curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enric
 Use the job ID to check status:
 
 ```bash
-curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/job_abc123 \
+curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/job_abc123" \
   -H "Authorization: Bearer rastro_pk_..."
 ```
 

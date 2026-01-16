@@ -9,15 +9,15 @@ title: 'Quickstart'
 ## 2. Enrich your data
 
 ```bash
-curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
   -H "Authorization: Bearer rastro_pk_..." \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "Find product specifications",
     "items": [{"name": "iPhone 15 Pro"}],
     "output_schema": [
-      {"name": "price_usd", "type": "number", "description": "Current retail price in USD"},
-      {"name": "weight_grams", "type": "number", "description": "Product weight in grams"}
+      {"name": "price", "type": "string", "description": "Current retail price"},
+      {"name": "weight", "type": "string", "description": "Product weight with units"}
     ]
   }'
 ```
@@ -28,16 +28,17 @@ curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
     {
       "original_data": {"name": "iPhone 15 Pro"},
       "enriched_fields": {
-        "price_usd": {
-          "value": 999,
+        "price": {
+          "value": "$999",
           "sources": ["https://apple.com/shop/buy-iphone/iphone-15-pro"]
         },
-        "weight_grams": {
-          "value": 187,
+        "weight": {
+          "value": "187 grams",
           "sources": ["https://apple.com/iphone-15-pro/specs"]
         }
       },
-      "all_sources": ["https://apple.com/..."]
+      "all_sources": ["https://apple.com/..."],
+      "error": null
     }
   ],
   "total_items": 1,
