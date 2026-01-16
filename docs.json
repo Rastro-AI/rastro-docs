@@ -8,9 +8,9 @@
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#0817EC",
-    "light": "#0817EC",
-    "dark": "#0817EC"
+    "primary": "#60A5FA",
+    "light": "#3B82F6",
+    "dark": "#93C5FD"
   },
   "topbarCtaButton": {
     "name": "Dashboard",
