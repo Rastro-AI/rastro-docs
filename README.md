@@ -1,46 +1,20 @@
-# Rastro API Documentation
+# Rastro API Docs
 
-Official documentation for the Rastro API, built with [Mintlify](https://mintlify.com).
+Built with [Mintlify](https://mintlify.com).
 
-## Development
-
-Install Mintlify CLI:
+## Local dev
 
 ```bash
 npm i -g mintlify
-```
-
-Run locally:
-
-```bash
 mintlify dev
 ```
-
-Open http://localhost:3000
-
-## Deployment
-
-Documentation is automatically deployed when changes are pushed to `main`.
 
 ## Structure
 
 ```
-├── introduction.mdx        # Getting started
-├── quickstart.mdx          # Quick start guide
-├── authentication.mdx      # Auth documentation
-├── concepts/               # Core concepts
-├── guides/                 # How-to guides
-├── api-reference/          # API endpoint docs
-│   ├── catalogs/
-│   ├── items/
-│   ├── products/
-│   └── workflows/
-└── sdks/                   # SDK documentation
+├── quickstart.mdx       # Get pricing in 30 seconds
+├── authentication.mdx   # API keys
+├── enrich/              # Enrich API (direct enrichment)
+├── flows/               # Flows (GUI-built pipelines)
+└── catalogs/            # Catalog storage
 ```
-
-## Contributing
-
-1. Create a branch
-2. Make changes
-3. Run `mintlify dev` to preview
-4. Submit PR

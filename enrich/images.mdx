@@ -1,0 +1,34 @@
+---
+title: 'Images'
+description: 'Find product images'
+---
+
+## Get product images
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/enrich \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Nintendo Switch OLED",
+    "fields": ["images"]
+  }'
+```
+
+```json
+{
+  "query": "Nintendo Switch OLED",
+  "results": {
+    "images": [
+      "https://assets.nintendo.com/image/upload/switch-oled-front.png",
+      "https://assets.nintendo.com/image/upload/switch-oled-back.png",
+      "https://assets.nintendo.com/image/upload/switch-oled-dock.png"
+    ]
+  },
+  "sources": ["nintendo.com"]
+}
+```
+
+## Coming soon
+
+Full image enrichment documentation is being finalized.

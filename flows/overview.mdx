@@ -1,0 +1,62 @@
+---
+title: 'Flows Overview'
+description: 'Build enrichment pipelines in the Rastro GUI, execute via API'
+---
+
+**Flows** are visual data pipelines you build in [dashboard.rastro.ai](https://dashboard.rastro.ai).
+
+## How it works
+
+1. **Build in the GUI** — Drag and drop nodes to create your enrichment pipeline
+2. **Execute via API** — Send data to your flow programmatically
+3. **Get results** — Poll for completion and retrieve enriched data
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Input     │ ──▶ │   Enrich    │ ──▶ │   Output    │
+│   (API)     │     │   (AI)      │     │   (API)     │
+└─────────────┘     └─────────────┘     └─────────────┘
+```
+
+## When to use Flows
+
+Use **Flows** when you need:
+- Multi-step enrichment (e.g., find specs → generate description → categorize)
+- Custom AI prompts
+- Data transformations
+- Writing results to a catalog
+
+Use the **Enrich API** directly when you need:
+- Simple, single-field enrichment
+- Quick lookups (price, availability)
+- No custom logic
+
+## Create a Flow
+
+1. Go to [dashboard.rastro.ai](https://dashboard.rastro.ai)
+2. Click **New Flow**
+3. Add nodes and connect them
+4. Save and copy your **Flow ID**
+
+Your Flow ID is in the URL:
+```
+https://dashboard.rastro.ai/flows/658bb0a7-d5d6-4e3e-9699-2debd9a6c212/edit
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              This is your flow_id
+```
+
+## Execute a Flow
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/workflows/{flow_id}/execute \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": [
+      {"sku": "A1", "title": "Product A"},
+      {"sku": "A2", "title": "Product B"}
+    ]
+  }'
+```
+
+See [Execute Flow](/flows/execute) for details.

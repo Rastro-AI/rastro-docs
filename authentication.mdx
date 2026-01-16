@@ -1,127 +1,33 @@
 ---
 title: 'Authentication'
-description: 'Learn how to authenticate with the Rastro API'
+description: 'API key authentication'
 ---
 
-## API Keys
+## Get your API key
 
-The Rastro API uses API keys for authentication. Include your API key in the `Authorization` header with every request:
+1. Go to [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys)
+2. Click **Create New Key**
+3. Copy the key (it won't be shown again)
+
+## Use your API key
+
+Include it in the `Authorization` header:
 
 ```bash
-Authorization: Bearer rastro_pk_your_api_key_here
+curl https://catalogapi.rastro.ai/api/enrich \
+  -H "Authorization: Bearer rastro_pk_your_key_here"
 ```
 
-<Warning>
-  **Keep your API keys secure!** Never expose them in client-side code, public repositories, or share them with untrusted parties.
-</Warning>
+## Key format
 
-## Getting an API Key
-
-<Steps>
-  <Step title="Open API Key Settings">
-    Navigate to [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys)
-  </Step>
-  <Step title="Create New Key">
-    Click **Create New Key** and provide a descriptive name
-  </Step>
-  <Step title="Save Your Key">
-    Copy the key immediately - it will only be shown once!
-  </Step>
-</Steps>
-
-## Key Types
-
-| Type | Prefix | Description |
-|------|--------|-------------|
-| **Live Key** | `rastro_pk_live_` | Full access to production data |
-| **Test Key** | `rastro_pk_test_` | Sandbox environment for testing |
-
-## Example Requests
-
-<CodeGroup>
-
-```bash cURL
-curl https://catalogapi.rastro.ai/api/public/catalogs \
-  -H "Authorization: Bearer rastro_pk_live_abc123..."
+```
+rastro_pk_live_abc123...   # Production key
+rastro_pk_test_abc123...   # Test key
 ```
 
-```python Python
-import requests
+## Errors
 
-headers = {
-    "Authorization": "Bearer rastro_pk_live_abc123..."
-}
-
-response = requests.get(
-    "https://catalogapi.rastro.ai/api/public/catalogs",
-    headers=headers
-)
-```
-
-```javascript JavaScript
-const headers = {
-  'Authorization': 'Bearer rastro_pk_live_abc123...'
-};
-
-const response = await fetch('https://catalogapi.rastro.ai/api/public/catalogs', {
-  headers
-});
-```
-
-```go Go
-req.Header.Add("Authorization", "Bearer rastro_pk_live_abc123...")
-```
-
-</CodeGroup>
-
-## Authentication Errors
-
-| Status Code | Error | Description |
-|-------------|-------|-------------|
-| `401` | `unauthorized` | Missing or invalid API key |
-| `403` | `forbidden` | API key doesn't have access to this resource |
-
-### Error Response Example
-
-```json
-{
-  "detail": "Invalid or missing API key"
-}
-```
-
-## Security Best Practices
-
-<AccordionGroup>
-  <Accordion title="Use Environment Variables">
-    Never hardcode API keys in your source code. Use environment variables:
-
-    ```bash
-    export RASTRO_API_KEY="rastro_pk_live_..."
-    ```
-
-    ```python
-    import os
-    api_key = os.environ.get("RASTRO_API_KEY")
-    ```
-  </Accordion>
-
-  <Accordion title="Rotate Keys Regularly">
-    Rotate your API keys periodically. Create a new key before deleting the old one to avoid downtime.
-  </Accordion>
-
-  <Accordion title="Use Separate Keys per Environment">
-    Use different API keys for development, staging, and production environments.
-  </Accordion>
-
-  <Accordion title="Monitor Key Usage">
-    Review API key usage in your dashboard to detect any unusual activity.
-  </Accordion>
-</AccordionGroup>
-
-## Organization Scope
-
-API keys are scoped to your organization. All resources accessed through the API belong to the organization associated with the API key.
-
-<Info>
-  If you're a member of multiple organizations, create separate API keys for each one.
-</Info>
+| Code | Meaning |
+|------|---------|
+| `401` | Missing or invalid API key |
+| `403` | Key doesn't have access to this resource |

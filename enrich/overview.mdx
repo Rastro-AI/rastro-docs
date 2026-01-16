@@ -1,0 +1,54 @@
+---
+title: 'Enrich Overview'
+description: 'Pull product data from the web with a single API call'
+---
+
+Rastro's Enrich API finds and extracts product information from across the web.
+
+## How it works
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/enrich \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Sony WH-1000XM5",
+    "fields": ["price", "description", "specs", "images"]
+  }'
+```
+
+```json
+{
+  "query": "Sony WH-1000XM5",
+  "results": {
+    "price": 349.99,
+    "description": "Industry-leading noise canceling headphones...",
+    "specs": {
+      "driver_size": "30mm",
+      "battery_life": "30 hours",
+      "weight": "250g"
+    },
+    "images": [
+      "https://..."
+    ]
+  },
+  "sources": ["sony.com", "amazon.com"]
+}
+```
+
+## Available fields
+
+| Field | Description |
+|-------|-------------|
+| `price` | Current price |
+| `currency` | Price currency |
+| `description` | Product description |
+| `specs` | Technical specifications |
+| `images` | Product image URLs |
+| `brand` | Brand name |
+| `category` | Product category |
+| `availability` | In stock status |
+
+## Coming soon
+
+Detailed documentation for the Enrich API is being finalized. Contact [support@rastro.ai](mailto:support@rastro.ai) for early access.

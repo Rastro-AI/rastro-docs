@@ -1,0 +1,65 @@
+---
+title: 'Items'
+description: 'Manage catalog items'
+---
+
+## List items
+
+```bash
+curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items?limit=50" \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+```json
+{
+  "items": [
+    {
+      "id": "item_xyz",
+      "data": {
+        "sku": "LAPTOP-001",
+        "title": "Pro Laptop",
+        "price": 999.99
+      }
+    }
+  ],
+  "total": 150
+}
+```
+
+## Get item
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id} \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+## Create item
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "unique_identifier": "LAPTOP-001",
+    "data": {
+      "title": "Pro Laptop",
+      "price": 999.99
+    }
+  }'
+```
+
+## Update item
+
+```bash
+curl -X PUT https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id} \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"price": 899.99}'
+```
+
+## Delete item
+
+```bash
+curl -X DELETE https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id} \
+  -H "Authorization: Bearer rastro_pk_..."
+```

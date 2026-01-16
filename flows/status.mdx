@@ -1,0 +1,54 @@
+---
+title: 'Flow Status'
+description: 'Check flow execution status and get results'
+api: 'GET /public/workflows/runs/{run_id}'
+---
+
+Check the status of a flow execution and retrieve results.
+
+## Request
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/workflows/runs/{run_id} \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+## Response (running)
+
+```json
+{
+  "workflow_run_id": "run_xyz789",
+  "status": "running",
+  "progress": 0.6,
+  "message": "Processing..."
+}
+```
+
+## Response (completed)
+
+```json
+{
+  "workflow_run_id": "run_xyz789",
+  "status": "completed",
+  "progress": 1.0,
+  "results": {
+    "data": [
+      {
+        "sku": "A1",
+        "title": "Product A",
+        "enriched_description": "..."
+      }
+    ],
+    "total": 1
+  }
+}
+```
+
+## Status values
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Queued |
+| `running` | Processing |
+| `completed` | Done |
+| `failed` | Error |

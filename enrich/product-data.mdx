@@ -1,0 +1,52 @@
+---
+title: 'Product Data'
+description: 'Enrich products with descriptions, specs, and metadata'
+---
+
+## Get product information
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/enrich \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "MacBook Pro 14 M3",
+    "fields": ["description", "specs", "brand", "category"]
+  }'
+```
+
+```json
+{
+  "query": "MacBook Pro 14 M3",
+  "results": {
+    "description": "The most advanced Mac laptop for demanding workflows...",
+    "specs": {
+      "processor": "Apple M3 Pro",
+      "memory": "18GB unified",
+      "storage": "512GB SSD",
+      "display": "14.2-inch Liquid Retina XDR"
+    },
+    "brand": "Apple",
+    "category": "Computers > Laptops"
+  }
+}
+```
+
+## Use with your SKU
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/enrich \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sku": "MBP14-M3-512",
+    "query": "MacBook Pro 14 M3 512GB",
+    "fields": ["description", "specs"]
+  }'
+```
+
+The `sku` is passed through in the response for easy matching.
+
+## Coming soon
+
+Full API reference documentation is being finalized.
