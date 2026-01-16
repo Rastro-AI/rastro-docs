@@ -1,0 +1,35 @@
+---
+title: 'Welcome to Rastro'
+description: 'Enrich your product data with AI-powered web research'
+---
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get up and running in 2 minutes
+  </Card>
+  <Card title="Enrich" icon="sparkles" href="/enrich/overview">
+    Research products and extract data from the web
+  </Card>
+  <Card title="Flows" icon="diagram-project" href="/flows/overview">
+    Build custom data pipelines in the dashboard
+  </Card>
+  <Card title="Catalogs" icon="database" href="/catalogs/overview">
+    Store and manage your product data
+  </Card>
+</CardGroup>
+
+## What is Rastro?
+
+Rastro finds product information on the web and returns structured data with source citations. Send us your products, tell us what to find, and get back enriched data.
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Find specifications and pricing",
+    "items": [{"name": "iPhone 15 Pro"}]
+  }'
+```
+
+Every field comes with its source URL so you know where the data came from.
