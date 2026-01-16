@@ -10,10 +10,7 @@
   "colors": {
     "primary": "#60A5FA",
     "light": "#3B82F6",
-    "dark": "#93C5FD",
-    "background": {
-      "dark": "#0F0F0F"
-    }
+    "dark": "#93C5FD"
   },
   "font": {
     "headings": {
