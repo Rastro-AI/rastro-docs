@@ -2,72 +2,53 @@
 title: 'Enrich'
 ---
 
-Enrich catalog items with web research. Rastro scrapes the web, extracts data, and tracks sources for each field.
+Enrich items with web research. Rastro scrapes the web, extracts data, and tracks sources for each field.
 
-## Start enrichment
+## Enrich items
 
 ```bash
-curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich \
+curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
   -H "Authorization: Bearer rastro_pk_..." \
   -H "Content-Type: application/json" \
   -d '{
-    "prompt": "Find product specifications from manufacturer websites",
-    "speed": "fast"
+    "prompt": "Find product specifications",
+    "items": [
+      {"name": "iPhone 15 Pro"},
+      {"name": "Samsung Galaxy S24"}
+    ]
   }'
 ```
 
 ```json
 {
-  "job_id": "abc123",
-  "status": "running",
-  "poll_url": "/api/public/catalogs/{catalog_id}/enrich/abc123"
-}
-```
-
-## Check status
-
-```bash
-curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}?include_results=true \
-  -H "Authorization: Bearer rastro_pk_..."
-```
-
-```json
-{
-  "job_id": "abc123",
-  "status": "completed",
-  "progress": 1.0,
-  "processed_items": 10,
   "results": [
     {
-      "item_id": "item_xyz",
-      "all_sources": ["https://manufacturer.com/product"],
-      "fields": {
-        "description": {
-          "value": "Professional-grade widget with...",
-          "sources": ["https://manufacturer.com/product"]
-        },
-        "specifications": {
-          "value": {"weight": "2.5kg", "dimensions": "10x20x5cm"},
-          "sources": ["https://manufacturer.com/product"]
-        }
-      }
+      "original_data": {"name": "iPhone 15 Pro"},
+      "enriched_fields": {
+        "price": {"value": "$999", "sources": ["https://apple.com/..."]},
+        "specs": {"value": {"chip": "A17 Pro"}, "sources": ["https://apple.com/..."]}
+      },
+      "all_sources": ["https://apple.com/..."],
+      "error": null
+    },
+    {
+      "original_data": {"name": "Samsung Galaxy S24"},
+      "enriched_fields": {
+        "price": {"value": "$799", "sources": ["https://samsung.com/..."]},
+        "specs": {"value": {"chip": "Snapdragon 8 Gen 3"}, "sources": ["https://samsung.com/..."]}
+      },
+      "all_sources": ["https://samsung.com/..."],
+      "error": null
     }
-  ]
+  ],
+  "total_items": 2,
+  "successful": 2
 }
 ```
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `prompt` | required | What to search for |
-| `speed` | `"fast"` | `"fast"`, `"medium"`, or `"slow"` (more thorough) |
-| `item_ids` | all | Specific items to enrich |
-| `wait_for_result` | `false` | Wait for completion (max 5 min) |
-
-## Cancel
-
-```bash
-curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}/cancel \
-  -H "Authorization: Bearer rastro_pk_..."
-```
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `prompt` | yes | What to search for |
+| `items` | yes | Array of items to enrich |

@@ -6,48 +6,38 @@ title: 'Quickstart'
 
 [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys) → Create New Key → Copy it.
 
-## 2. Enrich your catalog
+## 2. Enrich your data
 
 ```bash
-curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich \
+curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
   -H "Authorization: Bearer rastro_pk_..." \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "Find product specifications and pricing"}'
+  -d '{
+    "prompt": "Find product specifications and pricing",
+    "items": [{"name": "iPhone 15 Pro"}]
+  }'
 ```
 
 ```json
 {
-  "job_id": "job_abc123",
-  "status": "running",
-  "poll_url": "/api/public/catalogs/{catalog_id}/enrich/job_abc123"
-}
-```
-
-## 3. Get results
-
-```bash
-curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}?include_results=true \
-  -H "Authorization: Bearer rastro_pk_..."
-```
-
-```json
-{
-  "status": "completed",
   "results": [
     {
-      "item_id": "item_xyz",
-      "fields": {
-        "description": {
-          "value": "Professional-grade wireless headphones with 40mm drivers",
-          "sources": ["https://manufacturer.com/product"]
+      "original_data": {"name": "iPhone 15 Pro"},
+      "enriched_fields": {
+        "price": {
+          "value": "$999",
+          "sources": ["https://apple.com/iphone-15-pro"]
         },
         "specs": {
-          "value": {"weight": "250g", "battery": "30 hours"},
-          "sources": ["https://manufacturer.com/specs"]
+          "value": {"chip": "A17 Pro", "display": "6.1 inch"},
+          "sources": ["https://apple.com/iphone-15-pro/specs"]
         }
-      }
+      },
+      "all_sources": ["https://apple.com/iphone-15-pro"]
     }
-  ]
+  ],
+  "total_items": 1,
+  "successful": 1
 }
 ```
 
