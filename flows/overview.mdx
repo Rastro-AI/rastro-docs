@@ -1,54 +1,20 @@
 ---
-title: 'Flows Overview'
-description: 'Build enrichment pipelines in the Rastro GUI, execute via API'
+title: 'Flows'
 ---
 
-**Flows** are visual data pipelines you build in [dashboard.rastro.ai](https://dashboard.rastro.ai).
+**Flows** are data pipelines you build in the [Rastro dashboard](https://dashboard.rastro.ai), then execute via API.
 
 ## How it works
 
-1. **Build in the GUI** — Drag and drop nodes to create your enrichment pipeline
-2. **Execute via API** — Send data to your flow programmatically
-3. **Get results** — Poll for completion and retrieve enriched data
+1. **Build in the dashboard** — Create your flow visually at [dashboard.rastro.ai](https://dashboard.rastro.ai)
+2. **Get your Flow ID** — Copy it from the URL: `dashboard.rastro.ai/flows/{FLOW_ID}/edit`
+3. **Execute via API** — Send data in, get enriched data out
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Input     │ ──▶ │   Enrich    │ ──▶ │   Output    │
-│   (API)     │     │   (AI)      │     │   (API)     │
-└─────────────┘     └─────────────┘     └─────────────┘
-```
-
-## When to use Flows
-
-Use **Flows** when you need:
-- Multi-step enrichment (e.g., find specs → generate description → categorize)
-- Custom AI prompts
-- Data transformations
-- Writing results to a catalog
-
-Use the **Enrich API** directly when you need:
-- Simple, single-field enrichment
-- Quick lookups (price, availability)
-- No custom logic
-
-## Create a Flow
-
-1. Go to [dashboard.rastro.ai](https://dashboard.rastro.ai)
-2. Click **New Flow**
-3. Add nodes and connect them
-4. Save and copy your **Flow ID**
-
-Your Flow ID is in the URL:
-```
-https://dashboard.rastro.ai/flows/658bb0a7-d5d6-4e3e-9699-2debd9a6c212/edit
-                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                              This is your flow_id
-```
-
-## Execute a Flow
+## Example
 
 ```bash
-curl -X POST https://catalogapi.rastro.ai/api/public/workflows/{flow_id}/execute \
+# Execute
+curl -X POST https://catalogapi.rastro.ai/api/public/workflows/{FLOW_ID}/execute \
   -H "Authorization: Bearer rastro_pk_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -57,6 +23,29 @@ curl -X POST https://catalogapi.rastro.ai/api/public/workflows/{flow_id}/execute
       {"sku": "A2", "title": "Product B"}
     ]
   }'
+
+# Response
+{
+  "workflow_run_id": "run_abc123",
+  "status": "running"
+}
 ```
 
-See [Execute Flow](/flows/execute) for details.
+```bash
+# Check status
+curl https://catalogapi.rastro.ai/api/public/workflows/runs/run_abc123 \
+  -H "Authorization: Bearer rastro_pk_..."
+
+# Response (when complete)
+{
+  "status": "completed",
+  "results": {
+    "data": [
+      {"sku": "A1", "title": "Product A", "enriched_field": "..."},
+      {"sku": "A2", "title": "Product B", "enriched_field": "..."}
+    ]
+  }
+}
+```
+
+→ [Execute endpoint](/flows/execute) · [Status endpoint](/flows/status)

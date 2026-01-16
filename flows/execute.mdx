@@ -1,12 +1,7 @@
 ---
-title: 'Execute Flow'
-description: 'Run a flow via API'
+title: 'Execute'
 api: 'POST /public/workflows/{flow_id}/execute'
 ---
-
-Execute a flow you've built in [dashboard.rastro.ai](https://dashboard.rastro.ai).
-
-## Request
 
 ```bash
 curl -X POST https://catalogapi.rastro.ai/api/public/workflows/{flow_id}/execute \
@@ -14,68 +9,18 @@ curl -X POST https://catalogapi.rastro.ai/api/public/workflows/{flow_id}/execute
   -H "Content-Type: application/json" \
   -d '{
     "input": [
-      {"sku": "LAPTOP-001", "title": "Pro Laptop"},
-      {"sku": "MOUSE-001", "title": "Wireless Mouse"}
+      {"sku": "A1", "title": "Product A"}
     ]
   }'
 ```
 
-## Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `flow_id` | string | Flow ID from dashboard URL |
-| `input` | array | Records to process |
-
-## Response
+**Response:**
 
 ```json
 {
-  "workflow_run_id": "run_xyz789",
-  "status": "running",
-  "message": "Flow started with 2 input records"
+  "workflow_run_id": "run_abc123",
+  "status": "running"
 }
 ```
 
 Use `workflow_run_id` to [check status](/flows/status).
-
-## Example: Execute and wait
-
-```python
-import requests
-import time
-
-API_KEY = "rastro_pk_..."
-FLOW_ID = "your_flow_id"
-
-headers = {"Authorization": f"Bearer {API_KEY}"}
-
-# Start flow
-response = requests.post(
-    f"https://catalogapi.rastro.ai/api/public/workflows/{FLOW_ID}/execute",
-    headers={**headers, "Content-Type": "application/json"},
-    json={
-        "input": [
-            {"sku": "A1", "title": "Product A"}
-        ]
-    }
-)
-run_id = response.json()["workflow_run_id"]
-
-# Poll until done
-while True:
-    status = requests.get(
-        f"https://catalogapi.rastro.ai/api/public/workflows/runs/{run_id}",
-        headers=headers
-    ).json()
-
-    if status["status"] == "completed":
-        print(status["results"]["data"])
-        break
-
-    if status["status"] == "failed":
-        print(f"Error: {status['message']}")
-        break
-
-    time.sleep(3)
-```

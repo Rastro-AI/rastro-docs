@@ -1,0 +1,28 @@
+---
+title: 'Bulk'
+---
+
+Create or update up to 1000 items:
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/bulk \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"sku": "A1", "title": "Product A", "price": 29.99},
+      {"sku": "A2", "title": "Product B", "price": 39.99}
+    ],
+    "unique_field": "sku"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "created": 1,
+  "updated": 1,
+  "failed": 0
+}
+```

@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "Rastro API",
+  "name": "Rastro",
   "logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
@@ -11,31 +11,16 @@
     "light": "#71717A",
     "dark": "#FAFAFA"
   },
-  "topbarLinks": [
-    {
-      "name": "Support",
-      "url": "mailto:support@rastro.ai"
-    }
-  ],
   "topbarCtaButton": {
     "name": "Dashboard",
     "url": "https://dashboard.rastro.ai"
   },
   "navigation": [
     {
-      "group": "Get Started",
+      "group": "",
       "pages": [
         "quickstart",
         "authentication"
-      ]
-    },
-    {
-      "group": "Enrich",
-      "pages": [
-        "enrich/overview",
-        "enrich/product-data",
-        "enrich/pricing",
-        "enrich/images"
       ]
     },
     {
@@ -47,23 +32,21 @@
       ]
     },
     {
+      "group": "Enrich",
+      "pages": [
+        "enrich/overview"
+      ]
+    },
+    {
       "group": "Catalogs",
       "pages": [
         "catalogs/overview",
         "catalogs/items",
-        "catalogs/bulk-operations",
-        "catalogs/products"
+        "catalogs/bulk"
       ]
     }
   ],
-  "footerSocials": {
-    "twitter": "https://twitter.com/rastro_ai",
-    "github": "https://github.com/rastro-ai"
-  },
   "api": {
-    "baseUrl": "https://catalogapi.rastro.ai/api",
-    "auth": {
-      "method": "bearer"
-    }
+    "baseUrl": "https://catalogapi.rastro.ai/api"
   }
 }

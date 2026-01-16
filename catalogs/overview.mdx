@@ -1,12 +1,8 @@
 ---
-title: 'Catalogs Overview'
-description: 'Store and manage your product data'
+title: 'Catalogs'
 ---
 
-**Catalogs** are containers for your product data. Use them to:
-- Store enriched product information
-- Sync data from external systems
-- Export to Shopify, ERPs, etc.
+Catalogs store your product data.
 
 ## List catalogs
 
@@ -15,33 +11,11 @@ curl https://catalogapi.rastro.ai/api/public/catalogs \
   -H "Authorization: Bearer rastro_pk_..."
 ```
 
-```json
-{
-  "catalogs": [
-    {
-      "id": "cat_abc123",
-      "name": "Products",
-      "item_count": 1523
-    }
-  ]
-}
-```
-
-## Create a catalog
+## Create catalog
 
 ```bash
 curl -X POST https://catalogapi.rastro.ai/api/public/catalogs \
   -H "Authorization: Bearer rastro_pk_..." \
   -H "Content-Type: application/json" \
-  -d '{
-    "name": "My Products",
-    "unique_id_field": "sku"
-  }'
-```
-
-## Get a catalog
-
-```bash
-curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id} \
-  -H "Authorization: Bearer rastro_pk_..."
+  -d '{"name": "Products", "unique_id_field": "sku"}'
 ```

@@ -1,33 +1,11 @@
 ---
 title: 'Authentication'
-description: 'API key authentication'
 ---
 
-## Get your API key
+Get your API key from [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys).
 
-1. Go to [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys)
-2. Click **Create New Key**
-3. Copy the key (it won't be shown again)
-
-## Use your API key
-
-Include it in the `Authorization` header:
+Include it in every request:
 
 ```bash
-curl https://catalogapi.rastro.ai/api/enrich \
-  -H "Authorization: Bearer rastro_pk_your_key_here"
+Authorization: Bearer rastro_pk_...
 ```
-
-## Key format
-
-```
-rastro_pk_live_abc123...   # Production key
-rastro_pk_test_abc123...   # Test key
-```
-
-## Errors
-
-| Code | Meaning |
-|------|---------|
-| `401` | Missing or invalid API key |
-| `403` | Key doesn't have access to this resource |

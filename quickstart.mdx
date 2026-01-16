@@ -1,46 +1,29 @@
 ---
 title: 'Quickstart'
-description: 'Get product pricing in 30 seconds'
 ---
 
 ## 1. Get your API key
 
-Go to [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys) and create a key.
+[dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys) → Create New Key → Copy it.
 
-## 2. Enrich a product
+## 2. Run a flow
+
+Flows are built in the [Rastro dashboard](https://dashboard.rastro.ai). Once you have one, execute it via API:
 
 ```bash
-curl -X POST https://catalogapi.rastro.ai/api/enrich \
+curl -X POST https://catalogapi.rastro.ai/api/public/workflows/YOUR_FLOW_ID/execute \
   -H "Authorization: Bearer rastro_pk_..." \
   -H "Content-Type: application/json" \
-  -d '{
-    "query": "iPhone 15 Pro 256GB",
-    "fields": ["price", "currency"]
-  }'
+  -d '{"input": [{"sku": "ABC", "title": "My Product"}]}'
 ```
 
-Response:
+## 3. Check results
 
-```json
-{
-  "query": "iPhone 15 Pro 256GB",
-  "results": {
-    "price": 999.00,
-    "currency": "USD"
-  },
-  "sources": ["apple.com", "bestbuy.com"]
-}
+```bash
+curl https://catalogapi.rastro.ai/api/public/workflows/runs/RUN_ID \
+  -H "Authorization: Bearer rastro_pk_..."
 ```
 
-That's it. You just pulled live pricing data.
+That's it.
 
-## What's next?
-
-<CardGroup cols={2}>
-  <Card title="Enrich more fields" href="/enrich/overview">
-    Get descriptions, specs, images, and more
-  </Card>
-  <Card title="Run Flows" href="/flows/overview">
-    Build complex enrichment pipelines in the GUI
-  </Card>
-</CardGroup>
+→ [Learn more about Flows](/flows/overview)
