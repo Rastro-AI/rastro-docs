@@ -6,7 +6,7 @@ title: 'Quickstart'
 
 [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys) → Create New Key → Copy it.
 
-## 2. Enrich your data
+## 2. Start an enrichment job
 
 ```bash
 curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
@@ -22,8 +22,29 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
   }'
 ```
 
+**Response:**
+
 ```json
 {
+  "job_id": "job_abc123",
+  "status": "running"
+}
+```
+
+## 3. Poll for results
+
+Enrichment typically takes ~2 minutes. Query the job ID to check status:
+
+```bash
+curl "https://catalogapi.rastro.ai/api/public/enrich/job_abc123" \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+**Response (when complete):**
+
+```json
+{
+  "status": "completed",
   "results": [
     {
       "original_data": {"name": "iPhone 15 Pro"},
@@ -46,6 +67,10 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
 }
 ```
 
-That's it. Every enriched field includes its source URL.
+Every enriched field includes its source URL.
+
+<Tip>
+**Want faster results?** Add `"speed": "fast"` for quicker but less thorough enrichment.
+</Tip>
 
 -> [Enrich API reference](/enrich/quickstart)
