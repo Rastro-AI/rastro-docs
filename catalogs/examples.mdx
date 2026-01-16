@@ -1,0 +1,45 @@
+---
+title: 'Examples'
+---
+
+Use Catalogs when you need to store data in Rastro and work on it incrementally—enriching it in several steps, running multiple flows, or building up data over time.
+
+## Create a catalog
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Products", "unique_id_field": "sku"}'
+```
+
+## Bulk import items
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/bulk \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"sku": "A1", "title": "Product A", "price": 29.99},
+      {"sku": "A2", "title": "Product B", "price": 39.99}
+    ],
+    "unique_field": "sku"
+  }'
+```
+
+## Get items
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+## Update an item
+
+```bash
+curl -X PUT https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id} \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"price": 24.99}'
+```

@@ -1,0 +1,44 @@
+---
+title: 'Examples'
+---
+
+Use Enrich when you want Rastro to research products on the web and fill in missing data. Rastro scrapes manufacturer sites, extracts specs, and tracks sources for every field.
+
+## Basic enrichment
+
+Find product specifications from the web:
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Find product specifications and dimensions"}'
+```
+
+## Enrich specific items
+
+Only enrich certain products:
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Find pricing from manufacturer websites",
+    "item_ids": ["item_123", "item_456"]
+  }'
+```
+
+## Thorough research
+
+Use slow mode for more comprehensive results:
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Find detailed technical specifications",
+    "speed": "slow"
+  }'
+```

@@ -23,19 +23,19 @@
         "groups": [
           {
             "group": "Getting Started",
-            "pages": ["quickstart", "authentication"]
-          },
-          {
-            "group": "Flows",
-            "pages": ["flows/overview", "flows/execute", "flows/status"]
+            "pages": ["quickstart", "authentication", "examples"]
           },
           {
             "group": "Enrich",
-            "pages": ["enrich/overview"]
+            "pages": ["enrich/examples", "enrich/overview"]
+          },
+          {
+            "group": "Flows",
+            "pages": ["flows/examples", "flows/overview", "flows/execute", "flows/status"]
           },
           {
             "group": "Catalogs",
-            "pages": ["catalogs/overview", "catalogs/items", "catalogs/bulk"]
+            "pages": ["catalogs/examples", "catalogs/overview", "catalogs/items", "catalogs/bulk"]
           }
         ]
       }
