@@ -1,0 +1,148 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Rastro API",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#18181B",
+    "light": "#71717A",
+    "dark": "#FAFAFA"
+  },
+  "topbarLinks": [
+    {
+      "name": "Support",
+      "url": "mailto:support@rastro.ai"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Dashboard",
+    "url": "https://dashboard.rastro.ai"
+  },
+  "tabs": [
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    },
+    {
+      "name": "SDKs",
+      "url": "sdks"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "API Status",
+      "icon": "signal",
+      "url": "https://status.rastro.ai"
+    },
+    {
+      "name": "Community",
+      "icon": "discord",
+      "url": "https://discord.gg/rastro"
+    },
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/rastro-ai"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Get Started",
+      "pages": [
+        "introduction",
+        "quickstart",
+        "authentication"
+      ]
+    },
+    {
+      "group": "Core Concepts",
+      "pages": [
+        "concepts/catalogs",
+        "concepts/items",
+        "concepts/schemas",
+        "concepts/workflows"
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        "guides/sync-products",
+        "guides/bulk-operations",
+        "guides/workflow-automation",
+        "guides/webhooks"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api-reference/overview"
+      ]
+    },
+    {
+      "group": "Catalogs",
+      "pages": [
+        "api-reference/catalogs/list",
+        "api-reference/catalogs/create",
+        "api-reference/catalogs/get",
+        "api-reference/catalogs/update",
+        "api-reference/catalogs/delete"
+      ]
+    },
+    {
+      "group": "Catalog Items",
+      "pages": [
+        "api-reference/items/list",
+        "api-reference/items/create",
+        "api-reference/items/get",
+        "api-reference/items/update",
+        "api-reference/items/delete",
+        "api-reference/items/bulk-upsert"
+      ]
+    },
+    {
+      "group": "Products",
+      "pages": [
+        "api-reference/products/list",
+        "api-reference/products/get",
+        "api-reference/products/update",
+        "api-reference/products/create-variant",
+        "api-reference/products/bulk-upsert-variants"
+      ]
+    },
+    {
+      "group": "Workflows",
+      "pages": [
+        "api-reference/workflows/execute",
+        "api-reference/workflows/get-status",
+        "api-reference/workflows/list-runs"
+      ]
+    },
+    {
+      "group": "SDKs",
+      "pages": [
+        "sdks/overview",
+        "sdks/python",
+        "sdks/javascript",
+        "sdks/go"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/rastro_ai",
+    "github": "https://github.com/rastro-ai",
+    "linkedin": "https://linkedin.com/company/rastro-ai"
+  },
+  "api": {
+    "baseUrl": "https://catalogapi.rastro.ai/api",
+    "auth": {
+      "method": "bearer"
+    },
+    "playground": {
+      "mode": "show"
+    }
+  },
+  "openapi": "openapi.yaml"
+}

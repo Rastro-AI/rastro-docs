@@ -1,0 +1,65 @@
+---
+title: 'Get Item'
+api: 'GET /public/catalogs/{catalog_id}/items/{item_id}'
+---
+
+Get a single item by ID.
+
+## Request
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/catalogs/cat_abc123/items/item_xyz789 \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+## Parameters
+
+<ParamField path="catalog_id" type="string" required>
+  Catalog ID
+</ParamField>
+
+<ParamField path="item_id" type="string" required>
+  Item ID (UUID) or unique identifier value (e.g., SKU)
+</ParamField>
+
+## Response
+
+```json
+{
+  "id": "item_xyz789",
+  "data": {
+    "sku": "LAPTOP-001",
+    "title": "Pro Laptop",
+    "price": 1299.99,
+    "brand": "TechCorp"
+  },
+  "metadata": {
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-15T10:30:00Z",
+    "version": 3,
+    "unique_identifier": "LAPTOP-001"
+  }
+}
+```
+
+## Examples
+
+### By database ID
+
+```python
+response = requests.get(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id}",
+    headers={"Authorization": "Bearer rastro_pk_..."}
+)
+item = response.json()
+```
+
+### By SKU (unique identifier)
+
+```python
+response = requests.get(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/LAPTOP-001",
+    headers={"Authorization": "Bearer rastro_pk_..."}
+)
+item = response.json()
+```

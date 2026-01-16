@@ -1,0 +1,90 @@
+---
+title: 'Update Item'
+api: 'PUT /public/catalogs/{catalog_id}/items/{item_id}'
+---
+
+Update an item. Only include fields you want to change.
+
+## Request
+
+```bash
+curl -X PUT https://catalogapi.rastro.ai/api/public/catalogs/cat_abc123/items/item_xyz789 \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"price": 1199.99, "on_sale": true}'
+```
+
+## Parameters
+
+<ParamField path="catalog_id" type="string" required>
+  Catalog ID
+</ParamField>
+
+<ParamField path="item_id" type="string" required>
+  Item ID or unique identifier
+</ParamField>
+
+## Body
+
+Pass any fields to update. New fields are added to the schema automatically.
+
+```json
+{
+  "price": 1199.99,
+  "on_sale": true,
+  "new_field": "Added automatically"
+}
+```
+
+## Response
+
+Returns the updated item.
+
+```json
+{
+  "id": "item_xyz789",
+  "data": {
+    "sku": "LAPTOP-001",
+    "title": "Pro Laptop",
+    "price": 1199.99,
+    "on_sale": true,
+    "new_field": "Added automatically"
+  },
+  "metadata": {
+    "updated_at": "2024-01-15T10:30:00Z",
+    "version": 4
+  }
+}
+```
+
+## Examples
+
+### Update price
+
+```python
+response = requests.put(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id}",
+    headers={
+        "Authorization": "Bearer rastro_pk_...",
+        "Content-Type": "application/json"
+    },
+    json={"price": 999.99}
+)
+```
+
+### Add new fields (schema evolves)
+
+```python
+response = requests.put(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id}",
+    headers={
+        "Authorization": "Bearer rastro_pk_...",
+        "Content-Type": "application/json"
+    },
+    json={
+        "warranty_years": 3,
+        "certifications": ["Energy Star", "RoHS"]
+    }
+)
+# Schema now includes warranty_years and certifications
+```

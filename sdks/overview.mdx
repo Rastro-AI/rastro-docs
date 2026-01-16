@@ -1,0 +1,37 @@
+---
+title: 'SDKs Overview'
+description: 'Official client libraries for Rastro'
+---
+
+## Available SDKs
+
+<CardGroup cols={3}>
+  <Card title="Python" icon="python" href="/sdks/python">
+    pip install rastro
+  </Card>
+  <Card title="JavaScript" icon="js" href="/sdks/javascript">
+    npm install @rastro/sdk
+  </Card>
+  <Card title="Go" icon="golang" href="/sdks/go">
+    go get github.com/rastro-ai/rastro-go
+  </Card>
+</CardGroup>
+
+## Quick Comparison
+
+| Feature | Python | JavaScript | Go |
+|---------|--------|------------|-----|
+| Sync API | ✓ | ✓ | ✓ |
+| Async API | ✓ | ✓ | ✓ |
+| Workflow polling | ✓ | ✓ | ✓ |
+| Retry logic | ✓ | ✓ | ✓ |
+| Type hints | ✓ | TypeScript | ✓ |
+
+## No SDK? Use REST
+
+All SDKs wrap the REST API. You can use any HTTP client:
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/catalogs \
+  -H "Authorization: Bearer rastro_pk_..."
+```

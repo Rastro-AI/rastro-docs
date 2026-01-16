@@ -1,0 +1,67 @@
+---
+title: 'List Workflow Runs'
+api: 'GET /public/workflows/{workflow_id}/runs'
+---
+
+List recent executions of a workflow.
+
+## Request
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/workflows/wf_abc123/runs \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+## Parameters
+
+<ParamField path="workflow_id" type="string" required>
+  Workflow ID
+</ParamField>
+
+<ParamField query="limit" type="integer" default="20">
+  Number of runs to return
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by status: `running`, `completed`, `failed`
+</ParamField>
+
+## Response
+
+```json
+{
+  "runs": [
+    {
+      "workflow_run_id": "run_xyz789",
+      "status": "completed",
+      "created_at": "2024-01-15T10:30:00Z",
+      "completed_at": "2024-01-15T10:35:00Z",
+      "input_count": 50,
+      "output_count": 50
+    },
+    {
+      "workflow_run_id": "run_abc456",
+      "status": "running",
+      "created_at": "2024-01-15T11:00:00Z",
+      "progress": 0.45,
+      "input_count": 100
+    }
+  ],
+  "total": 2
+}
+```
+
+## Example
+
+```python
+# Get recent completed runs
+response = requests.get(
+    f"https://catalogapi.rastro.ai/api/public/workflows/{workflow_id}/runs",
+    headers={"Authorization": "Bearer rastro_pk_..."},
+    params={"status": "completed", "limit": 10}
+)
+
+runs = response.json()["runs"]
+for run in runs:
+    print(f"{run['workflow_run_id']}: {run['output_count']} items")
+```

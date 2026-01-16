@@ -1,0 +1,71 @@
+---
+title: 'API Overview'
+description: 'Base URL, authentication, and common patterns'
+---
+
+## Base URL
+
+```
+https://catalogapi.rastro.ai/api
+```
+
+## Authentication
+
+Include your API key in every request:
+
+```bash
+Authorization: Bearer rastro_pk_your_key_here
+```
+
+## Request Format
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/catalogs \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json"
+```
+
+## Response Format
+
+All responses are JSON:
+
+```json
+{
+  "data": { ... },
+  "total": 100,
+  "page": 1
+}
+```
+
+## HTTP Status Codes
+
+| Code | Meaning |
+|------|---------|
+| `200` | Success |
+| `201` | Created |
+| `400` | Bad request |
+| `401` | Invalid API key |
+| `403` | Access denied |
+| `404` | Not found |
+| `500` | Server error |
+
+## Error Response
+
+```json
+{
+  "detail": "Description of what went wrong"
+}
+```
+
+## Pagination
+
+Most list endpoints support:
+
+```bash
+?limit=50&offset=100
+```
+
+| Param | Default | Max |
+|-------|---------|-----|
+| `limit` | 50 | 1000 |
+| `offset` | 0 | - |

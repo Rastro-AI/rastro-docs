@@ -1,0 +1,44 @@
+---
+title: 'Update Product'
+api: 'PUT /public/catalogs/{catalog_id}/products/{product_id}'
+---
+
+Update product-level fields across all variants.
+
+## Request
+
+```bash
+curl -X PUT https://catalogapi.rastro.ai/api/public/catalogs/cat_abc123/products/TSHIRT-BASIC \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product_title": "Premium T-Shirt",
+    "product_brand": "Apparel Co"
+  }'
+```
+
+## Parameters
+
+<ParamField path="catalog_id" type="string" required>
+  Catalog ID
+</ParamField>
+
+<ParamField path="product_id" type="string" required>
+  Product ID
+</ParamField>
+
+## Body
+
+Fields prefixed with `product_` are shared across all variants.
+
+```json
+{
+  "product_title": "Premium T-Shirt",
+  "product_brand": "Apparel Co",
+  "product_description": "Updated description"
+}
+```
+
+## Response
+
+Returns the updated product with all variants.

@@ -1,0 +1,235 @@
+---
+title: 'AI Workflows'
+description: 'Automate data enrichment and transformation with AI-powered workflows'
+---
+
+## What are Workflows?
+
+**Workflows** are AI-powered data pipelines that transform and enrich your product data. Build them visually in the dashboard, then execute them programmatically via API.
+
+<Frame>
+  <img src="/images/workflow-diagram.svg" alt="Workflow Example" />
+</Frame>
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Generate Descriptions" icon="pen-to-square">
+    Create SEO-optimized product descriptions using AI
+  </Card>
+  <Card title="Categorize Products" icon="tags">
+    Automatically classify products into categories
+  </Card>
+  <Card title="Extract Specifications" icon="table">
+    Parse specs from PDFs and datasheets
+  </Card>
+  <Card title="Enrich from Web" icon="globe">
+    Fetch additional data from manufacturer websites
+  </Card>
+  <Card title="Translate Content" icon="language">
+    Localize product content for multiple markets
+  </Card>
+  <Card title="Standardize Data" icon="filter">
+    Clean and normalize messy supplier data
+  </Card>
+</CardGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="Design in Dashboard">
+    Use the visual workflow builder to create your pipeline
+  </Step>
+  <Step title="Configure Nodes">
+    Set up AI prompts, transformations, and outputs
+  </Step>
+  <Step title="Test & Iterate">
+    Run test executions and refine your workflow
+  </Step>
+  <Step title="Execute via API">
+    Trigger workflows programmatically with your data
+  </Step>
+  <Step title="Get Results">
+    Poll for completion and retrieve enriched data
+  </Step>
+</Steps>
+
+## Workflow Execution
+
+### Start a Workflow
+
+```python
+import requests
+
+response = requests.post(
+    f"https://catalogapi.rastro.ai/api/public/workflows/{workflow_id}/execute",
+    headers={"Authorization": f"Bearer {api_key}"},
+    json={
+        "input": [
+            {
+                "sku": "LAPTOP-001",
+                "title": "Professional Laptop",
+                "raw_specs": "Intel i7, 16GB RAM, 512GB SSD"
+            }
+        ]
+    }
+)
+
+run = response.json()
+print(f"Started: {run['workflow_run_id']}")
+```
+
+### Poll for Status
+
+```python
+import time
+
+while True:
+    status = requests.get(
+        f"https://catalogapi.rastro.ai/api/public/workflows/runs/{run_id}",
+        headers=headers
+    ).json()
+
+    print(f"Progress: {status['progress']*100:.0f}%")
+
+    if status["status"] in ["completed", "failed"]:
+        break
+
+    time.sleep(5)
+```
+
+### Get Results
+
+```python
+if status["status"] == "completed":
+    results = status["results"]["data"]
+    for item in results:
+        print(f"SKU: {item['sku']}")
+        print(f"AI Description: {item['ai_description']}")
+```
+
+## Execution Status
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Queued for execution |
+| `running` | Currently processing |
+| `completed` | Successfully finished |
+| `failed` | Error occurred |
+| `cancelled` | Manually stopped |
+
+## Input Requirements
+
+- Workflows must have **exactly one input node**
+- Input data is an **array of objects**
+- Each object represents one record to process
+
+```json
+{
+  "input": [
+    {"sku": "A", "title": "Product A"},
+    {"sku": "B", "title": "Product B"},
+    {"sku": "C", "title": "Product C"}
+  ]
+}
+```
+
+## Output Structure
+
+Completed workflows return:
+
+```json
+{
+  "workflow_run_id": "run_abc123",
+  "status": "completed",
+  "progress": 1.0,
+  "results": {
+    "data": [
+      {
+        "sku": "A",
+        "title": "Product A",
+        "ai_description": "Generated description...",
+        "ai_category": "Electronics"
+      }
+    ],
+    "total": 3,
+    "page": 1,
+    "page_size": 50,
+    "has_more": false
+  },
+  "node_results": {
+    "node_uuid": {
+      "node_type": "attribute_mapper",
+      "data": [...],
+      "total": 3
+    }
+  }
+}
+```
+
+## Finding Your Workflow ID
+
+Your workflow ID is in the dashboard URL:
+
+```
+https://dashboard.rastro.ai/flows/658bb0a7-d5d6-4e3e-9699-2debd9a6c212/edit
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              This is your workflow_id
+```
+
+Or list workflows via API:
+
+```bash
+GET /public/workflows
+```
+
+## Rate Limits
+
+| Account Type | Limits |
+|--------------|--------|
+| **Demo** | 10 records/execution, no concurrent runs |
+| **Pro** | 1000 records/execution, 5 concurrent runs |
+| **Enterprise** | Custom limits |
+
+## Error Handling
+
+```python
+if status["status"] == "failed":
+    print(f"Error: {status['message']}")
+
+    # Check node-level errors
+    for node_id, node_result in status.get("node_results", {}).items():
+        if "error" in node_result:
+            print(f"Node {node_id} failed: {node_result['error']}")
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Batch Your Data">
+    Send multiple records per execution rather than one at a time
+  </Accordion>
+
+  <Accordion title="Poll Efficiently">
+    Use exponential backoff when polling (3s → 5s → 10s → 15s)
+  </Accordion>
+
+  <Accordion title="Handle Failures Gracefully">
+    Implement retry logic for transient failures
+  </Accordion>
+
+  <Accordion title="Save Results">
+    Store workflow results in your catalog or database immediately after completion
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Workflow Automation" icon="robot" href="/guides/workflow-automation">
+    Advanced workflow patterns
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/workflows/execute">
+    Full workflow API docs
+  </Card>
+</CardGroup>

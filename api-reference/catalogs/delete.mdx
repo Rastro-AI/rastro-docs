@@ -1,0 +1,31 @@
+---
+title: 'Delete Catalog'
+api: 'DELETE /public/catalogs/{catalog_id}'
+---
+
+Delete a catalog and all its items.
+
+<Warning>
+  This permanently deletes the catalog and all items. This cannot be undone.
+</Warning>
+
+## Request
+
+```bash
+curl -X DELETE https://catalogapi.rastro.ai/api/public/catalogs/cat_abc123 \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+## Parameters
+
+<ParamField path="catalog_id" type="string" required>
+  Catalog ID
+</ParamField>
+
+## Response
+
+```json
+{
+  "message": "Catalog deleted successfully"
+}
+```

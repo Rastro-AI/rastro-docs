@@ -1,0 +1,134 @@
+---
+title: 'Bulk Upsert'
+api: 'POST /public/catalogs/{catalog_id}/items/bulk'
+---
+
+Create or update multiple items in one request. Items are matched by the `unique_field`.
+
+## Request
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/cat_abc123/items/bulk \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"sku": "LAPTOP-001", "title": "Laptop", "price": 999},
+      {"sku": "MOUSE-001", "title": "Mouse", "price": 29}
+    ],
+    "unique_field": "sku"
+  }'
+```
+
+## Parameters
+
+<ParamField path="catalog_id" type="string" required>
+  Catalog ID
+</ParamField>
+
+## Body
+
+<ParamField body="items" type="array" required>
+  Array of items to upsert (max: 1000)
+</ParamField>
+
+<ParamField body="unique_field" type="string" required>
+  Field to match existing items (e.g., `sku`)
+</ParamField>
+
+## Response
+
+```json
+{
+  "created": 1,
+  "updated": 1,
+  "failed": 0,
+  "total": 2
+}
+```
+
+## Examples
+
+### Sync products from your database
+
+```python
+import requests
+
+products = [
+    {"sku": "PROD-001", "title": "Widget", "price": 19.99},
+    {"sku": "PROD-002", "title": "Gadget", "price": 29.99},
+    {"sku": "PROD-003", "title": "Gizmo", "price": 39.99},
+]
+
+response = requests.post(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/bulk",
+    headers={
+        "Authorization": "Bearer rastro_pk_...",
+        "Content-Type": "application/json"
+    },
+    json={
+        "items": products,
+        "unique_field": "sku"
+    }
+)
+
+result = response.json()
+print(f"Created: {result['created']}, Updated: {result['updated']}")
+```
+
+### Large batch (paginate for >1000 items)
+
+```python
+def sync_products(products, catalog_id, batch_size=500):
+    """Sync products in batches."""
+    total_created = 0
+    total_updated = 0
+
+    for i in range(0, len(products), batch_size):
+        batch = products[i:i + batch_size]
+
+        response = requests.post(
+            f"{BASE_URL}/public/catalogs/{catalog_id}/items/bulk",
+            headers=headers,
+            json={
+                "items": batch,
+                "unique_field": "sku"
+            }
+        )
+
+        result = response.json()
+        total_created += result["created"]
+        total_updated += result["updated"]
+
+        print(f"Batch {i//batch_size + 1}: +{result['created']} new, ~{result['updated']} updated")
+
+    return {"created": total_created, "updated": total_updated}
+
+# Sync 5000 products
+result = sync_products(all_products, catalog_id)
+print(f"Total: {result['created']} created, {result['updated']} updated")
+```
+
+### From CSV file
+
+```python
+import csv
+import requests
+
+# Read CSV
+with open("products.csv") as f:
+    reader = csv.DictReader(f)
+    products = list(reader)
+
+# Sync to Rastro
+response = requests.post(
+    f"{BASE_URL}/public/catalogs/{catalog_id}/items/bulk",
+    headers=headers,
+    json={
+        "items": products,
+        "unique_field": "sku"
+    }
+)
+
+print(response.json())
+```

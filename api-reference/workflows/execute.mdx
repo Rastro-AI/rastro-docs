@@ -1,0 +1,129 @@
+---
+title: 'Execute Workflow'
+api: 'POST /public/workflows/{workflow_id}/execute'
+---
+
+Start a workflow with your input data.
+
+## Request
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/workflows/wf_abc123/execute \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": [
+      {"sku": "LAPTOP-001", "title": "Pro Laptop"},
+      {"sku": "MOUSE-001", "title": "Wireless Mouse"}
+    ]
+  }'
+```
+
+## Parameters
+
+<ParamField path="workflow_id" type="string" required>
+  Workflow ID (find it in the dashboard URL)
+</ParamField>
+
+## Body
+
+<ParamField body="input" type="array" required>
+  Array of records to process
+</ParamField>
+
+## Response
+
+```json
+{
+  "workflow_run_id": "run_xyz789",
+  "workflow_id": "wf_abc123",
+  "workflow_name": "Product Enrichment",
+  "status": "running",
+  "created_at": "2024-01-15T10:30:00Z",
+  "poll_url": "/api/public/workflows/runs/run_xyz789",
+  "total_nodes": 5,
+  "message": "Workflow execution started with 2 input records"
+}
+```
+
+## Examples
+
+### Basic execution
+
+```python
+import requests
+import time
+
+# Start workflow
+response = requests.post(
+    f"https://catalogapi.rastro.ai/api/public/workflows/{workflow_id}/execute",
+    headers={
+        "Authorization": "Bearer rastro_pk_...",
+        "Content-Type": "application/json"
+    },
+    json={
+        "input": [
+            {"sku": "LAPTOP-001", "title": "Pro Laptop"}
+        ]
+    }
+)
+
+run_id = response.json()["workflow_run_id"]
+print(f"Started: {run_id}")
+```
+
+### Execute and wait for results
+
+```python
+import requests
+import time
+
+API_KEY = "rastro_pk_..."
+BASE_URL = "https://catalogapi.rastro.ai/api"
+headers = {"Authorization": f"Bearer {API_KEY}"}
+
+def run_workflow(workflow_id, input_data):
+    """Execute workflow and wait for results."""
+
+    # Start
+    response = requests.post(
+        f"{BASE_URL}/public/workflows/{workflow_id}/execute",
+        headers={**headers, "Content-Type": "application/json"},
+        json={"input": input_data}
+    )
+    run_id = response.json()["workflow_run_id"]
+
+    # Poll until done
+    while True:
+        status = requests.get(
+            f"{BASE_URL}/public/workflows/runs/{run_id}",
+            headers=headers
+        ).json()
+
+        if status["status"] == "completed":
+            return status["results"]["data"]
+
+        if status["status"] == "failed":
+            raise Exception(f"Workflow failed: {status['message']}")
+
+        time.sleep(3)
+
+# Usage
+results = run_workflow("wf_abc123", [
+    {"sku": "A", "title": "Product A"},
+    {"sku": "B", "title": "Product B"}
+])
+
+for item in results:
+    print(item)
+```
+
+### Finding your workflow ID
+
+Your workflow ID is in the dashboard URL:
+
+```
+https://dashboard.rastro.ai/flows/658bb0a7-d5d6-4e3e-9699-2debd9a6c212/edit
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              This is your workflow_id
+```

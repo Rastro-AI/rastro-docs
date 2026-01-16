@@ -1,0 +1,168 @@
+---
+title: 'Catalogs'
+description: 'Understanding catalogs - the core data containers in Rastro'
+---
+
+## What is a Catalog?
+
+A **catalog** is a container for your product data. Think of it as a flexible database table that automatically adapts to your data structure.
+
+<Frame>
+  <img src="/images/catalog-diagram.svg" alt="Catalog Structure" />
+</Frame>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Dynamic Schema" icon="shuffle">
+    Schemas evolve automatically as you add new fields
+  </Card>
+  <Card title="Versioned" icon="clock-rotate-left">
+    Track changes with automatic version history
+  </Card>
+  <Card title="Multi-tenant" icon="building">
+    Isolated per organization with full access control
+  </Card>
+  <Card title="Scalable" icon="arrow-up-right-dots">
+    Handle millions of items efficiently
+  </Card>
+</CardGroup>
+
+## Catalog Structure
+
+```json
+{
+  "id": "cat_abc123",
+  "name": "Electronics Catalog",
+  "description": "All electronic products",
+  "unique_id_field": "sku",
+  "item_count": 15234,
+  "schema_version": "1.5",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-15T12:30:00Z"
+}
+```
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique catalog identifier |
+| `name` | string | Human-readable name |
+| `description` | string | Optional description |
+| `unique_id_field` | string | Field used for item deduplication (e.g., `sku`) |
+| `item_count` | integer | Number of items in the catalog |
+| `schema_version` | string | Current schema version |
+| `created_at` | datetime | Creation timestamp |
+| `updated_at` | datetime | Last update timestamp |
+
+## Unique Identifier Field
+
+Every catalog has a `unique_id_field` that identifies items uniquely. This is used for:
+
+- **Upsert operations**: Update existing items or create new ones
+- **Deduplication**: Prevent duplicate items
+- **Lookups**: Quickly find items by their business identifier
+
+Common choices:
+- `sku` - Stock Keeping Unit
+- `product_id` - External product ID
+- `upc` - Universal Product Code
+- `gtin` - Global Trade Item Number
+
+<Tip>
+  Choose a field that's stable and unique across your product data. SKU is the most common choice.
+</Tip>
+
+## Schema Evolution
+
+Rastro automatically evolves your catalog schema when you add new fields:
+
+```python
+# Initial item
+{
+  "sku": "LAPTOP-001",
+  "title": "Laptop",
+  "price": 999.99
+}
+# Schema: sku (string), title (string), price (number)
+
+# Later, add a new field
+{
+  "sku": "LAPTOP-002",
+  "title": "Pro Laptop",
+  "price": 1499.99,
+  "brand": "TechCorp",        # New field!
+  "warranty_years": 3          # New field!
+}
+# Schema auto-evolves to include: brand (string), warranty_years (integer)
+```
+
+<Info>
+  Schema evolution is **additive-only** through the API. Fields are never automatically removed.
+</Info>
+
+## Products vs Items
+
+Catalogs can optionally support **product grouping**:
+
+- **Items** (variants): Individual SKUs with specific attributes (color, size)
+- **Products**: Logical groupings of related items
+
+```json
+// Product with variants
+{
+  "product_id": "TSHIRT-BASIC",
+  "product_title": "Basic T-Shirt",
+  "product_brand": "Apparel Co",
+  "variants": [
+    {"sku": "TSHIRT-BASIC-RED-S", "color": "Red", "size": "S"},
+    {"sku": "TSHIRT-BASIC-RED-M", "color": "Red", "size": "M"},
+    {"sku": "TSHIRT-BASIC-BLUE-S", "color": "Blue", "size": "S"}
+  ]
+}
+```
+
+<Note>
+  Product grouping is optional. If you don't need variants, you can use catalogs as flat item lists.
+</Note>
+
+## Common Patterns
+
+### E-commerce Catalog
+```json
+{
+  "name": "Shopify Products",
+  "unique_id_field": "sku",
+  "description": "Products synced from Shopify"
+}
+```
+
+### Supplier Feed
+```json
+{
+  "name": "Supplier ABC Feed",
+  "unique_id_field": "supplier_part_number",
+  "description": "Raw product data from Supplier ABC"
+}
+```
+
+### Multi-channel Master
+```json
+{
+  "name": "Master Product Catalog",
+  "unique_id_field": "internal_id",
+  "description": "Golden record for all channels"
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create a Catalog" icon="plus" href="/api-reference/catalogs/create">
+    API reference for creating catalogs
+  </Card>
+  <Card title="Add Items" icon="layer-group" href="/guides/bulk-operations">
+    Learn to add products efficiently
+  </Card>
+</CardGroup>

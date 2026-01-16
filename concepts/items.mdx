@@ -1,0 +1,231 @@
+---
+title: 'Catalog Items'
+description: 'Working with individual products in your catalogs'
+---
+
+## What is a Catalog Item?
+
+A **catalog item** represents a single product or SKU in your catalog. Items are flexible JSON documents that can contain any fields you need.
+
+## Item Structure
+
+```json
+{
+  "id": "item_abc123",
+  "data": {
+    "sku": "LAPTOP-001",
+    "title": "Professional Laptop 15\"",
+    "description": "High-performance laptop for professionals",
+    "price": 1299.99,
+    "cost": 850.00,
+    "brand": "TechCorp",
+    "category": "Electronics > Computers > Laptops",
+    "image_urls": [
+      "https://example.com/laptop-front.jpg",
+      "https://example.com/laptop-side.jpg"
+    ],
+    "specifications": {
+      "processor": "Intel i7-12700H",
+      "ram": "16GB DDR5",
+      "storage": "512GB NVMe SSD"
+    },
+    "in_stock": true,
+    "quantity": 45
+  },
+  "metadata": {
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-15T10:30:00Z",
+    "version": 3,
+    "unique_identifier": "LAPTOP-001"
+  }
+}
+```
+
+## Field Types
+
+Rastro automatically infers field types from your data:
+
+| Type | Example | Notes |
+|------|---------|-------|
+| `string` | `"Laptop"` | Text values |
+| `number` | `1299.99` | Integers and decimals |
+| `boolean` | `true` | True/false values |
+| `array` | `["Red", "Blue"]` | Lists of values |
+| `object` | `{"key": "value"}` | Nested structures |
+
+## Data Field
+
+The `data` object contains your actual product information. You can include any fields:
+
+```json
+{
+  "data": {
+    // Standard fields
+    "sku": "ABC-123",
+    "title": "Product Name",
+    "price": 99.99,
+
+    // Custom fields - add whatever you need
+    "supplier_code": "SUP-456",
+    "warehouse_location": "A-12-3",
+    "custom_attribute": "any value"
+  }
+}
+```
+
+<Tip>
+  Use consistent field names across items. While Rastro handles inconsistencies gracefully, consistent naming makes queries and exports easier.
+</Tip>
+
+## Metadata
+
+The `metadata` object is managed by Rastro:
+
+| Field | Description |
+|-------|-------------|
+| `created_at` | When the item was first created |
+| `updated_at` | When the item was last modified |
+| `version` | Increments with each update |
+| `unique_identifier` | The value of the catalog's unique ID field |
+
+## Image URLs
+
+Rastro automatically aggregates image URLs from your data into an `image_urls` array:
+
+```json
+{
+  "data": {
+    "main_image": "https://example.com/main.jpg",
+    "gallery": ["https://example.com/g1.jpg", "https://example.com/g2.jpg"],
+    "thumbnail": "https://example.com/thumb.jpg",
+
+    // Automatically created by Rastro
+    "image_urls": [
+      "https://example.com/main.jpg",
+      "https://example.com/g1.jpg",
+      "https://example.com/g2.jpg",
+      "https://example.com/thumb.jpg"
+    ]
+  }
+}
+```
+
+<Info>
+  The `image_urls` field is auto-generated. Update the source fields (like `main_image` or `gallery`), and Rastro will update `image_urls` automatically.
+</Info>
+
+## Creating Items
+
+### Single Item
+
+```python
+response = requests.post(
+    f"{BASE_URL}/public/catalogs/{catalog_id}/items",
+    headers=headers,
+    json={
+        "unique_identifier": "LAPTOP-001",
+        "data": {
+            "title": "Professional Laptop",
+            "price": 1299.99,
+            "brand": "TechCorp"
+        }
+    }
+)
+```
+
+### Bulk Upsert
+
+For multiple items, use bulk upsert:
+
+```python
+response = requests.post(
+    f"{BASE_URL}/public/catalogs/{catalog_id}/items/bulk",
+    headers=headers,
+    json={
+        "items": [
+            {"sku": "LAPTOP-001", "title": "Laptop", "price": 999},
+            {"sku": "MOUSE-001", "title": "Mouse", "price": 29}
+        ],
+        "unique_field": "sku"
+    }
+)
+```
+
+## Updating Items
+
+Updates are **partial** - only include fields you want to change:
+
+```python
+# Only update price and add a new field
+response = requests.put(
+    f"{BASE_URL}/public/catalogs/{catalog_id}/items/{item_id}",
+    headers=headers,
+    json={
+        "price": 1199.99,  # Updated
+        "on_sale": True    # New field (schema evolves)
+    }
+)
+```
+
+<Note>
+  Updates don't delete existing fields. To remove a field, set it to `null`.
+</Note>
+
+## Querying Items
+
+### Pagination
+
+```bash
+GET /public/catalogs/{catalog_id}/items?limit=50&offset=100
+```
+
+### Search
+
+```bash
+GET /public/catalogs/{catalog_id}/items?search=laptop
+```
+
+### Sorting
+
+```bash
+GET /public/catalogs/{catalog_id}/items?sort=price:asc
+GET /public/catalogs/{catalog_id}/items?sort=created_at:desc
+```
+
+### Filtering
+
+```bash
+GET /public/catalogs/{catalog_id}/items?filter=price:>100
+GET /public/catalogs/{catalog_id}/items?filter=category:=Electronics
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Consistent Field Names">
+    Stick to a naming convention (e.g., `snake_case`) and use it consistently across all items.
+  </Accordion>
+
+  <Accordion title="Include a Unique Identifier">
+    Always include the catalog's unique ID field (e.g., `sku`) in your data to enable upserts.
+  </Accordion>
+
+  <Accordion title="Batch Your Updates">
+    Use bulk upsert for efficiency. Avoid making thousands of individual API calls.
+  </Accordion>
+
+  <Accordion title="Store Images as URLs">
+    Store image URLs, not base64 data. Rastro can host images for you if needed.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Bulk Operations" icon="layer-group" href="/guides/bulk-operations">
+    Efficiently manage thousands of items
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/items/list">
+    Full items API documentation
+  </Card>
+</CardGroup>
