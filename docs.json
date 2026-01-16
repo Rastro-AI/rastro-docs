@@ -39,7 +39,10 @@
           "catalogs/items",
           "catalogs/get-item",
           "catalogs/update-item",
-          "catalogs/bulk"
+          "catalogs/bulk",
+          "catalogs/enrich",
+          "catalogs/enrich-status",
+          "catalogs/enrich-cancel"
         ]
       }
     ]

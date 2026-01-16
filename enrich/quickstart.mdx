@@ -19,8 +19,8 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
     "prompt": "Find product specifications",
     "items": [{"name": "iPhone 15 Pro"}],
     "output_schema": [
-      {"name": "price", "type": "string", "description": "Current retail price"},
-      {"name": "weight", "type": "string", "description": "Product weight with units"}
+      {"name": "price_usd", "type": "number", "description": "Current retail price in USD"},
+      {"name": "weight_grams", "type": "number", "description": "Product weight in grams"}
     ]
   }'
 ```
@@ -33,12 +33,12 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
     {
       "original_data": {"name": "iPhone 15 Pro"},
       "enriched_fields": {
-        "price": {
-          "value": "$999",
+        "price_usd": {
+          "value": 999,
           "sources": ["https://apple.com/shop/buy-iphone/iphone-15-pro"]
         },
-        "weight": {
-          "value": "187 grams",
+        "weight_grams": {
+          "value": 187,
           "sources": ["https://apple.com/iphone-15-pro/specs"]
         }
       },
@@ -58,8 +58,7 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
 | `prompt` | Yes | - | Search prompt for web enrichment |
 | `items` | Yes | - | List of JSON objects to enrich |
 | `output_schema` | Yes | - | List of field definitions: `[{name, type, description}, ...]` |
-| `allowed_domains` | No | any | Restrict to these domains only |
-| `speed` | No | `"fast"` | `"fast"`, `"medium"`, or `"slow"` |
+| `speed` | No | `"medium"` | `"fast"`, `"medium"`, or `"slow"` |
 
 **Field types:** `string`, `number`, `integer`, `boolean`, `array`
 
@@ -78,30 +77,10 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
       {"name": "Samsung Galaxy S24"}
     ],
     "output_schema": [
-      {"name": "price", "type": "string", "description": "Current retail price"},
-      {"name": "display", "type": "string", "description": "Screen size and type"},
-      {"name": "battery", "type": "string", "description": "Battery capacity"}
+      {"name": "price_usd", "type": "number", "description": "Current retail price in USD"},
+      {"name": "display_inches", "type": "number", "description": "Screen size in inches"},
+      {"name": "battery_mah", "type": "number", "description": "Battery capacity in mAh"}
     ]
-  }'
-```
-
-## Domain restrictions
-
-Limit searches to specific domains:
-
-```bash
-curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
-  -H "Authorization: Bearer rastro_pk_..." \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Find official specs",
-    "items": [{"name": "MacBook Pro 16"}],
-    "output_schema": [
-      {"name": "cpu", "type": "string", "description": "Processor model"},
-      {"name": "ram", "type": "string", "description": "Memory options"},
-      {"name": "price", "type": "string", "description": "Starting price"}
-    ],
-    "allowed_domains": ["apple.com"]
   }'
 ```
 
@@ -126,9 +105,9 @@ response = requests.post(
             {"name": "Apple AirPods Pro 2"}
         ],
         "output_schema": [
-            {"name": "price", "type": "string", "description": "Current retail price"},
-            {"name": "weight", "type": "string", "description": "Product weight"},
-            {"name": "battery_life", "type": "string", "description": "Battery duration"}
+            {"name": "price_usd", "type": "number", "description": "Current retail price in USD"},
+            {"name": "weight_grams", "type": "number", "description": "Product weight in grams"},
+            {"name": "battery_hours", "type": "number", "description": "Battery life in hours"}
         ]
     }
 )

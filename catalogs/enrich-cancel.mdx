@@ -1,0 +1,27 @@
+---
+title: 'POST Cancel Enrichment Job'
+api: 'POST /public/catalogs/{catalog_id}/enrich/{job_id}/cancel'
+---
+
+Cancel a running enrichment job.
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}/cancel \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+**Response:**
+
+```json
+{
+  "job_id": "job_abc123",
+  "status": "cancelled",
+  "total_items": 150,
+  "completed_items": 45,
+  "failed_items": 0
+}
+```
+
+Items that were already enriched before cancellation will retain their enriched data.
+
+-> [Start enrichment job](/catalogs/enrich) | [Poll job status](/catalogs/enrich-status)

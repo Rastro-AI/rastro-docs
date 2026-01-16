@@ -1,0 +1,46 @@
+---
+title: 'GET Enrichment Job Status'
+api: 'GET /public/catalogs/{catalog_id}/enrich/{job_id}'
+---
+
+Poll the status of an enrichment job.
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id} \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+**Response (running):**
+
+```json
+{
+  "job_id": "job_abc123",
+  "status": "running",
+  "total_items": 150,
+  "completed_items": 45,
+  "failed_items": 2
+}
+```
+
+**Response (completed):**
+
+```json
+{
+  "job_id": "job_abc123",
+  "status": "completed",
+  "total_items": 150,
+  "completed_items": 148,
+  "failed_items": 2
+}
+```
+
+## Job statuses
+
+| Status | Description |
+|--------|-------------|
+| `running` | Job is in progress |
+| `completed` | Job finished successfully |
+| `failed` | Job failed |
+| `cancelled` | Job was cancelled |
+
+-> [Start enrichment job](/catalogs/enrich) | [Cancel job](/catalogs/enrich-cancel)

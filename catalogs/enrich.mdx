@@ -1,0 +1,48 @@
+---
+title: 'POST Start Enrichment Job'
+api: 'POST /public/catalogs/{catalog_id}/enrich'
+---
+
+Start an enrichment job to enrich all items in a catalog.
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Find product specifications",
+    "output_schema": [
+      {"name": "price_usd", "type": "number", "description": "Current retail price in USD"},
+      {"name": "weight_grams", "type": "number", "description": "Product weight in grams"}
+    ]
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "job_id": "job_abc123",
+  "status": "running",
+  "total_items": 150
+}
+```
+
+## Parameters
+
+| Parameter | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `prompt` | Yes | - | Search prompt for web enrichment |
+| `output_schema` | Yes | - | List of field definitions: `[{name, type, description}, ...]` |
+| `speed` | No | `"medium"` | `"fast"`, `"medium"`, or `"slow"` |
+
+## Polling for results
+
+Use the job ID to check status:
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/job_abc123 \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+-> [Poll job status](/catalogs/enrich-status) | [Cancel job](/catalogs/enrich-cancel)

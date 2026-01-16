@@ -16,8 +16,8 @@ curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
       {"name": "Samsung Galaxy S24"}
     ],
     "output_schema": [
-      {"name": "price", "type": "string", "description": "Current retail price"},
-      {"name": "weight", "type": "string", "description": "Product weight with units"}
+      {"name": "price_usd", "type": "number", "description": "Current retail price in USD"},
+      {"name": "weight_grams", "type": "number", "description": "Product weight in grams"}
     ]
   }'
 ```
@@ -30,8 +30,8 @@ curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
     {
       "original_data": {"name": "iPhone 15 Pro"},
       "enriched_fields": {
-        "price": {"value": "$999", "sources": ["https://apple.com/..."]},
-        "weight": {"value": "187 grams", "sources": ["https://apple.com/..."]}
+        "price_usd": {"value": 999, "sources": ["https://apple.com/..."]},
+        "weight_grams": {"value": 187, "sources": ["https://apple.com/..."]}
       },
       "all_sources": ["https://apple.com/..."],
       "error": null
@@ -49,8 +49,7 @@ curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
 | `prompt` | Yes | - | Search prompt for web enrichment |
 | `items` | Yes | - | List of JSON objects to enrich |
 | `output_schema` | Yes | - | List of field definitions: `[{name, type, description}, ...]` |
-| `allowed_domains` | No | any | Restrict to these domains only |
-| `speed` | No | `"fast"` | `"fast"`, `"medium"`, or `"slow"` |
+| `speed` | No | `"medium"` | `"fast"`, `"medium"`, or `"slow"` |
 
 ## Output Schema
 
@@ -59,14 +58,14 @@ Define the fields you want to extract:
 ```json
 {
   "output_schema": [
-    {"name": "price", "type": "string", "description": "Current retail price"},
-    {"name": "specs", "type": "object", "description": "Technical specifications"},
-    {"name": "in_stock", "type": "boolean", "description": "Whether item is available"}
+    {"name": "price_usd", "type": "number", "description": "Current retail price in USD"},
+    {"name": "in_stock", "type": "boolean", "description": "Whether item is available"},
+    {"name": "features", "type": "array", "description": "List of key features"}
   ]
 }
 ```
 
-**Field types:** `string`, `number`, `integer`, `boolean`, `array`, `object`
+**Field types:** `string`, `number`, `integer`, `boolean`, `array`
 
 <Tip>
 **Need more control?** Use [Flows](/flows/quickstart) to build reusable pipelines with transformations, filters, and multi-step enrichment.
