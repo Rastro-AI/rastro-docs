@@ -6,24 +6,51 @@ title: 'Quickstart'
 
 [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys) → Create New Key → Copy it.
 
-## 2. Run a flow
-
-Flows are built in the [Rastro dashboard](https://dashboard.rastro.ai). Once you have one, execute it via API:
+## 2. Enrich your catalog
 
 ```bash
-curl -X POST https://catalogapi.rastro.ai/api/public/workflows/YOUR_FLOW_ID/execute \
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich \
   -H "Authorization: Bearer rastro_pk_..." \
   -H "Content-Type: application/json" \
-  -d '{"input": [{"sku": "ABC", "title": "My Product"}]}'
+  -d '{"prompt": "Find product specifications and pricing"}'
 ```
 
-## 3. Check results
+```json
+{
+  "job_id": "job_abc123",
+  "status": "running",
+  "poll_url": "/api/public/catalogs/{catalog_id}/enrich/job_abc123"
+}
+```
+
+## 3. Get results
 
 ```bash
-curl https://catalogapi.rastro.ai/api/public/workflows/runs/RUN_ID \
+curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}?include_results=true \
   -H "Authorization: Bearer rastro_pk_..."
 ```
 
-That's it.
+```json
+{
+  "status": "completed",
+  "results": [
+    {
+      "item_id": "item_xyz",
+      "fields": {
+        "description": {
+          "value": "Professional-grade wireless headphones with 40mm drivers",
+          "sources": ["https://manufacturer.com/product"]
+        },
+        "specs": {
+          "value": {"weight": "250g", "battery": "30 hours"},
+          "sources": ["https://manufacturer.com/specs"]
+        }
+      }
+    }
+  ]
+}
+```
 
-→ [Learn more about Flows](/flows/overview)
+That's it. Every enriched field includes its source URL.
+
+→ [More Enrich examples](/enrich/examples)
