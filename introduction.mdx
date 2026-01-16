@@ -1,26 +1,26 @@
 ---
 title: 'Welcome to Rastro'
-description: 'Enrich your product data with AI-powered web research'
+description: 'Best in class e-commerce catalog enrichment.'
 ---
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
     Get up and running in 2 minutes
   </Card>
-  <Card title="Enrich" icon="sparkles" href="/enrich/overview">
+  <Card title="Enrich" icon="sparkles" href="/enrich/quickstart">
     Research products and extract data from the web
   </Card>
-  <Card title="Flows" icon="diagram-project" href="/flows/overview">
+  <Card title="Flows" icon="diagram-project" href="/flows/quickstart">
     Build custom data pipelines in the dashboard
   </Card>
-  <Card title="Catalogs" icon="database" href="/catalogs/overview">
+  <Card title="Catalogs" icon="database" href="/catalogs/quickstart">
     Store and manage your product data
   </Card>
 </CardGroup>
 
 ## What is Rastro?
 
-Rastro finds product information on the web and returns structured data with source citations. Send us your products, tell us what to find, and get back enriched data.
+Rastro is the fastest way to enrich and transform catalog data to launch products faster. Simply define the information you need and what you have, and receive it with citations.
 
 ```bash
 curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
@@ -28,7 +28,11 @@ curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "Find specifications and pricing",
-    "items": [{"name": "iPhone 15 Pro"}]
+    "items": [{"name": "iPhone 15 Pro"}],
+    "output_schema": [
+      {"name": "price", "type": "string", "description": "Current retail price"},
+      {"name": "specs", "type": "object", "description": "Technical specifications"}
+    ]
   }'
 ```
 

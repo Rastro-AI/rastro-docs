@@ -1,0 +1,88 @@
+---
+title: 'Catalogs Quickstart'
+---
+
+Catalogs store your data in Rastro. Create a catalog, add items, then enrich them with Flows or the Enrich API.
+
+## 1. Create a catalog
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Products", "unique_id_field": "sku"}'
+```
+
+**Response:**
+
+```json
+{
+  "id": "cat_abc123",
+  "name": "Products",
+  "unique_id_field": "sku"
+}
+```
+
+## 2. Add items (bulk)
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/cat_abc123/items/bulk \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"sku": "A1", "title": "Product A", "price": 29.99},
+      {"sku": "A2", "title": "Product B", "price": 39.99},
+      {"sku": "A3", "title": "Product C", "price": 49.99}
+    ],
+    "unique_field": "sku"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "created": 3,
+  "updated": 0,
+  "failed": 0
+}
+```
+
+## 3. List your items
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/catalogs/cat_abc123/items \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+**Response:**
+
+```json
+{
+  "items": [
+    {"id": "item_1", "sku": "A1", "title": "Product A", "price": 29.99},
+    {"id": "item_2", "sku": "A2", "title": "Product B", "price": 39.99},
+    {"id": "item_3", "sku": "A3", "title": "Product C", "price": 49.99}
+  ],
+  "total": 3,
+  "page": 1
+}
+```
+
+## 4. Update an item
+
+```bash
+curl -X PUT https://catalogapi.rastro.ai/api/public/catalogs/cat_abc123/items/item_1 \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"price": 24.99}'
+```
+
+## Key concepts
+
+- **unique_id_field** — The field used to identify items (e.g., `sku`, `id`, `email`). Used for upserts.
+- **Bulk upsert** — Add up to 1000 items at once. Existing items (matched by unique field) are updated.
+- **Catalogs + Flows** — Connect a catalog to a Flow to automatically enrich items when they're added.
+
+-> [List catalogs](/catalogs/list) | [Create catalog](/catalogs/create) | [Bulk upsert](/catalogs/bulk)

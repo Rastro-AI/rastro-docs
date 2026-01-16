@@ -1,0 +1,150 @@
+---
+title: 'Enrich Quickstart'
+---
+
+Enrich any JSON data with AI-powered web research. No catalog required — just pass your items and define what fields to extract.
+
+**How it works:**
+1. Send items + output schema defining fields to extract
+2. AI searches the web and extracts the specified fields (items processed concurrently)
+3. Get enriched fields with source citations for each value
+
+## Basic request
+
+```bash
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Find product specifications",
+    "items": [{"name": "iPhone 15 Pro"}],
+    "output_schema": [
+      {"name": "price", "type": "string", "description": "Current retail price"},
+      {"name": "weight", "type": "string", "description": "Product weight with units"}
+    ]
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "results": [
+    {
+      "original_data": {"name": "iPhone 15 Pro"},
+      "enriched_fields": {
+        "price": {
+          "value": "$999",
+          "sources": ["https://apple.com/shop/buy-iphone/iphone-15-pro"]
+        },
+        "weight": {
+          "value": "187 grams",
+          "sources": ["https://apple.com/iphone-15-pro/specs"]
+        }
+      },
+      "all_sources": ["https://apple.com/..."],
+      "error": null
+    }
+  ],
+  "total_items": 1,
+  "successful": 1
+}
+```
+
+## Parameters
+
+| Parameter | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `prompt` | Yes | - | Search prompt for web enrichment |
+| `items` | Yes | - | List of JSON objects to enrich |
+| `output_schema` | Yes | - | List of field definitions: `[{name, type, description}, ...]` |
+| `allowed_domains` | No | any | Restrict to these domains only |
+| `speed` | No | `"fast"` | `"fast"`, `"medium"`, or `"slow"` |
+
+**Field types:** `string`, `number`, `integer`, `boolean`, `array`
+
+## Multiple items
+
+Items are processed concurrently:
+
+```bash
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Find product specifications",
+    "items": [
+      {"name": "iPhone 15 Pro"},
+      {"name": "Samsung Galaxy S24"}
+    ],
+    "output_schema": [
+      {"name": "price", "type": "string", "description": "Current retail price"},
+      {"name": "display", "type": "string", "description": "Screen size and type"},
+      {"name": "battery", "type": "string", "description": "Battery capacity"}
+    ]
+  }'
+```
+
+## Domain restrictions
+
+Limit searches to specific domains:
+
+```bash
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Find official specs",
+    "items": [{"name": "MacBook Pro 16"}],
+    "output_schema": [
+      {"name": "cpu", "type": "string", "description": "Processor model"},
+      {"name": "ram", "type": "string", "description": "Memory options"},
+      {"name": "price", "type": "string", "description": "Starting price"}
+    ],
+    "allowed_domains": ["apple.com"]
+  }'
+```
+
+## Python example
+
+```python
+import requests
+
+API_KEY = "rastro_pk_..."
+BASE_URL = "https://catalogapi.rastro.ai/api"
+
+response = requests.post(
+    f"{BASE_URL}/public/enrich",
+    headers={
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    },
+    json={
+        "prompt": "Find product specifications",
+        "items": [
+            {"name": "Sony WH-1000XM5"},
+            {"name": "Apple AirPods Pro 2"}
+        ],
+        "output_schema": [
+            {"name": "price", "type": "string", "description": "Current retail price"},
+            {"name": "weight", "type": "string", "description": "Product weight"},
+            {"name": "battery_life", "type": "string", "description": "Battery duration"}
+        ]
+    }
+)
+
+result = response.json()
+print(f"Processed {result['total_items']} items, {result['successful']} successful")
+
+for item_result in result["results"]:
+    print(f"\n{item_result['original_data']['name']}:")
+    for field, data in item_result["enriched_fields"].items():
+        print(f"  {field}: {data['value']}")
+        print(f"    Sources: {data['sources']}")
+```
+
+<Tip>
+**Need more control?** Use [Flows](/flows/quickstart) to build reusable pipelines with transformations, filters, and multi-step enrichment.
+</Tip>
+
+-> [Full API reference](/enrich/overview)

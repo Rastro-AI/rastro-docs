@@ -16,32 +16,38 @@
     "name": "Dashboard",
     "url": "https://dashboard.rastro.ai"
   },
-  "navigation": [
-    {
-      "group": "Getting Started",
-      "pages": ["introduction", "quickstart", "authentication"]
-    },
-    {
-      "group": "Enrich",
-      "pages": ["enrich/overview"]
-    },
-    {
-      "group": "Flows",
-      "pages": ["flows/overview", "flows/execute", "flows/status"]
-    },
-    {
-      "group": "Catalogs",
-      "pages": [
-        "catalogs/list",
-        "catalogs/create",
-        "catalogs/items",
-        "catalogs/get-item",
-        "catalogs/update-item",
-        "catalogs/bulk"
-      ]
-    }
-  ],
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": ["introduction", "quickstart", "authentication"]
+      },
+      {
+        "group": "Enrich",
+        "pages": ["enrich/quickstart", "enrich/overview"]
+      },
+      {
+        "group": "Flows",
+        "pages": ["flows/quickstart", "flows/execute", "flows/status"]
+      },
+      {
+        "group": "Catalogs",
+        "pages": [
+          "catalogs/quickstart",
+          "catalogs/list",
+          "catalogs/create",
+          "catalogs/items",
+          "catalogs/get-item",
+          "catalogs/update-item",
+          "catalogs/bulk"
+        ]
+      }
+    ]
+  },
   "api": {
     "baseUrl": "https://catalogapi.rastro.ai/api"
+  },
+  "contextual": {
+    "options": ["copy", "chatgpt", "claude"]
   }
 }

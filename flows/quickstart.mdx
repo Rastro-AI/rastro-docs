@@ -1,0 +1,74 @@
+---
+title: 'Flows Quickstart'
+---
+
+Flows are reusable data pipelines you build visually, then execute via API or dashboard. Perfect for recurring enrichment tasks.
+
+## 1. Create a flow from a template
+
+1. Go to [dashboard.rastro.ai/flows](https://dashboard.rastro.ai/flows)
+2. Click **Templates**
+3. Select **Competitor Pricing**
+4. Upload your CSV
+5. Click **Run**
+
+That's it — your flow will process each row and enrich it with competitor pricing data.
+
+## 2. Execute via API
+
+Once you have a flow, you can also trigger it programmatically.
+
+Get your Flow ID from the URL: `dashboard.rastro.ai/flows/{FLOW_ID}/edit`
+
+```bash
+curl -X POST https://catalogapi.rastro.ai/api/public/workflows/{FLOW_ID}/execute \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": [
+      {"sku": "A1", "title": "Product A"},
+      {"sku": "A2", "title": "Product B"}
+    ]
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "workflow_run_id": "run_abc123",
+  "status": "running"
+}
+```
+
+## 3. Check status and get results
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/workflows/runs/run_abc123 \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+**Response (when complete):**
+
+```json
+{
+  "status": "completed",
+  "results": {
+    "data": [
+      {"sku": "A1", "title": "Product A", "enriched_field": "..."},
+      {"sku": "A2", "title": "Product B", "enriched_field": "..."}
+    ]
+  }
+}
+```
+
+## Flows vs Enrich API
+
+| Feature | Enrich API | Flows |
+|---------|------------|-------|
+| Setup | None | Build in dashboard |
+| Best for | One-off enrichment | Recurring pipelines |
+| Customization | Prompt + schema | Full visual editor |
+| Processing | Synchronous | Async with status polling |
+
+-> [Execute endpoint](/flows/execute) | [Status endpoint](/flows/status)
