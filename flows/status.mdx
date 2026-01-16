@@ -1,5 +1,5 @@
 ---
-title: 'Status'
+title: 'GET Flow Status'
 api: 'GET /public/workflows/runs/{run_id}'
 ---
 
@@ -17,14 +17,14 @@ curl https://catalogapi.rastro.ai/api/public/workflows/runs/{run_id} \
 }
 ```
 
-**Response (complete):**
+**Response (completed):**
 
 ```json
 {
   "status": "completed",
   "results": {
     "data": [
-      {"sku": "A1", "title": "Product A", "enriched": "..."}
+      {"sku": "A1", "title": "Product A", "enriched_field": "..."}
     ]
   }
 }

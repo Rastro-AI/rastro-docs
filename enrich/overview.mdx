@@ -1,10 +1,9 @@
 ---
-title: 'Enrich'
+title: 'POST Enrich'
+api: 'POST /public/enrich'
 ---
 
 Enrich items with web research. Rastro scrapes the web, extracts data, and tracks sources for each field.
-
-## Enrich items
 
 ```bash
 curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
@@ -19,6 +18,8 @@ curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
   }'
 ```
 
+**Response:**
+
 ```json
 {
   "results": [
@@ -29,15 +30,6 @@ curl -X POST https://catalogapi.rastro.ai/api/public/enrich \
         "specs": {"value": {"chip": "A17 Pro"}, "sources": ["https://apple.com/..."]}
       },
       "all_sources": ["https://apple.com/..."],
-      "error": null
-    },
-    {
-      "original_data": {"name": "Samsung Galaxy S24"},
-      "enriched_fields": {
-        "price": {"value": "$799", "sources": ["https://samsung.com/..."]},
-        "specs": {"value": {"chip": "Snapdragon 8 Gen 3"}, "sources": ["https://samsung.com/..."]}
-      },
-      "all_sources": ["https://samsung.com/..."],
       "error": null
     }
   ],

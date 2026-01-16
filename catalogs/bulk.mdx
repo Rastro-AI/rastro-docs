@@ -1,8 +1,9 @@
 ---
-title: 'Bulk'
+title: 'POST Bulk Upsert'
+api: 'POST /public/catalogs/{catalog_id}/items/bulk'
 ---
 
-Create or update up to 1000 items:
+Create or update up to 1000 items at once.
 
 ```bash
 curl -X POST https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/bulk \

@@ -1,33 +1,21 @@
 ---
-title: 'Items'
+title: 'GET List Items'
+api: 'GET /public/catalogs/{catalog_id}/items'
 ---
-
-## List items
 
 ```bash
 curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items \
   -H "Authorization: Bearer rastro_pk_..."
 ```
 
-## Get item
+**Response:**
 
-```bash
-curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id} \
-  -H "Authorization: Bearer rastro_pk_..."
-```
-
-## Update item
-
-```bash
-curl -X PUT https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id} \
-  -H "Authorization: Bearer rastro_pk_..." \
-  -H "Content-Type: application/json" \
-  -d '{"price": 99.99}'
-```
-
-## Delete item
-
-```bash
-curl -X DELETE https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id} \
-  -H "Authorization: Bearer rastro_pk_..."
+```json
+{
+  "items": [
+    {"id": "item_123", "sku": "A1", "title": "Product A", "price": 29.99}
+  ],
+  "total": 150,
+  "page": 1
+}
 ```

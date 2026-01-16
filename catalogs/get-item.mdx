@@ -1,0 +1,20 @@
+---
+title: 'GET Item'
+api: 'GET /public/catalogs/{catalog_id}/items/{item_id}'
+---
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id} \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+**Response:**
+
+```json
+{
+  "id": "item_123",
+  "sku": "A1",
+  "title": "Product A",
+  "price": 29.99
+}
+```

@@ -1,0 +1,19 @@
+---
+title: 'GET List Catalogs'
+api: 'GET /public/catalogs'
+---
+
+```bash
+curl https://catalogapi.rastro.ai/api/public/catalogs \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+**Response:**
+
+```json
+{
+  "catalogs": [
+    {"id": "cat_123", "name": "Products", "item_count": 150}
+  ]
+}
+```

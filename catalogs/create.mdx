@@ -1,21 +1,21 @@
 ---
-title: 'Catalogs'
+title: 'POST Create Catalog'
+api: 'POST /public/catalogs'
 ---
-
-Catalogs store your product data.
-
-## List catalogs
-
-```bash
-curl https://catalogapi.rastro.ai/api/public/catalogs \
-  -H "Authorization: Bearer rastro_pk_..."
-```
-
-## Create catalog
 
 ```bash
 curl -X POST https://catalogapi.rastro.ai/api/public/catalogs \
   -H "Authorization: Bearer rastro_pk_..." \
   -H "Content-Type: application/json" \
   -d '{"name": "Products", "unique_id_field": "sku"}'
+```
+
+**Response:**
+
+```json
+{
+  "id": "cat_123",
+  "name": "Products",
+  "unique_id_field": "sku"
+}
 ```

@@ -1,0 +1,22 @@
+---
+title: 'PUT Update Item'
+api: 'PUT /public/catalogs/{catalog_id}/items/{item_id}'
+---
+
+```bash
+curl -X PUT https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id} \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"price": 24.99}'
+```
+
+**Response:**
+
+```json
+{
+  "id": "item_123",
+  "sku": "A1",
+  "title": "Product A",
+  "price": 24.99
+}
+```
