@@ -24,7 +24,7 @@
       },
       {
         "group": "Enrich",
-        "pages": ["enrich/quickstart", "enrich/overview", "enrich/infer-schema"]
+        "pages": ["enrich/quickstart", "enrich/overview"]
       },
       {
         "group": "Flows",
