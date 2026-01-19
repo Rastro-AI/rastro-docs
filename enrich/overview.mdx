@@ -23,6 +23,7 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
 
 ```json
 {
+  "job_id": "abc123-def456-...",
   "results": [
     {
       "original_data": {"name": "iPhone 15 Pro"},
@@ -37,23 +38,31 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
         }
       },
       "all_sources": ["https://apple.com/..."],
-      "error": null
+      "staged_change_id": "ghi789-..."
     }
   ],
   "total_items": 1,
-  "successful": 1
+  "successful": 1,
+  "credits_used": 1,
+  "status": "completed"
 }
 ```
 
-## Parameters
+## Request Parameters
 
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `prompt` | Yes | - | Search prompt for web enrichment |
-| `items` | Yes | - | List of JSON objects to enrich |
-| `output_schema` | Yes | - | List of field definitions: `[{name, type, description}, ...]` |
-| `allowed_domains` | No | any | Restrict web sources to these domains only |
-| `speed` | No | `"medium"` | `"fast"`, `"medium"`, or `"slow"` |
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | - | Search prompt for web enrichment (e.g., "Find product specifications") |
+| `items` | array | Yes | - | List of JSON objects to enrich |
+| `output_schema` | array | Yes | - | List of field definitions: `[{name, type, description}, ...]` |
+| `allowed_domains` | array | No | any | Restrict web sources to these domains only |
+| `speed` | string | No | `"medium"` | Processing speed: `"fast"`, `"medium"`, or `"slow"` |
+| `taxonomy` | object | No | - | Taxonomy definition for category prediction (TaxonomyInput format) |
+| `predict_taxonomy` | boolean | No | `false` | If true and taxonomy provided, predict category_id for each item |
+| `quality_prompt` | string | No | - | Prompt for quality scoring (e.g., "Evaluate if product has complete specs"). Adds 1-5 quality score |
+| `async_mode` | boolean | No | `false` | If true, returns immediately with job_id instead of waiting |
+| `stage_changes` | boolean | No | `true` | If true, writes results to staged changes for review workflow |
+| `catalog_id` | string | No | - | Optional catalog ID to link this enrichment job to |
 
 ## Output Schema
 
@@ -70,6 +79,152 @@ Define the fields you want to extract:
 ```
 
 **Field types:** `string`, `number`, `integer`, `boolean`, `array`
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `job_id` | string | Unique job ID for tracking (always returned) |
+| `results` | array | Enrichment results for each item (empty if `async_mode=true`) |
+| `total_items` | integer | Total number of items processed |
+| `successful` | integer | Number of successfully enriched items |
+| `credits_used` | integer | Number of credits used (1 per successful item) |
+| `status` | string | Job status: `"running"` (async) or `"completed"` (sync) |
+
+## Result Item Fields
+
+Each item in `results` contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `original_data` | object | The original input data |
+| `enriched_fields` | object | Enriched fields with `{value, sources[]}` for each |
+| `all_sources` | array | All web sources scraped for this item |
+| `error` | string | Error message if enrichment failed (null on success) |
+| `category_id` | string | Predicted taxonomy node ID (if `predict_taxonomy=true`) |
+| `category_path` | string | Full category path (e.g., "Electronics > Phones > Smartphones") |
+| `taxonomy_attributes` | object | Predicted taxonomy-specific attributes |
+| `quality_score` | integer | Quality score 1-5 (if `quality_prompt` provided) |
+| `quality_result` | object | Full quality assessment with `{score, explanation, issues, suggestions}` |
+| `review_info` | object | AI reasoning and flags for human review |
+| `staged_change_id` | string | ID of the staged change record (if `stage_changes=true`) |
+
+## Taxonomy Prediction
+
+Add automatic category classification:
+
+```json
+{
+  "prompt": "Find product details",
+  "items": [{"name": "Sony WH-1000XM5"}],
+  "output_schema": [...],
+  "predict_taxonomy": true,
+  "taxonomy": {
+    "name": "Electronics",
+    "hierarchy_levels": ["Category", "Subcategory"],
+    "nodes": {
+      "audio": {"name": "Audio", "parent": null},
+      "headphones": {"name": "Headphones", "parent": "audio"},
+      "earbuds": {"name": "Earbuds", "parent": "audio"}
+    }
+  }
+}
+```
+
+**Response includes:**
+
+```json
+{
+  "results": [{
+    "category_id": "headphones",
+    "category_path": "Audio > Headphones",
+    "taxonomy_attributes": {...}
+  }]
+}
+```
+
+## Quality Scoring
+
+Add automatic quality evaluation:
+
+```json
+{
+  "prompt": "Find product specs",
+  "items": [{"name": "iPhone 15 Pro"}],
+  "output_schema": [...],
+  "quality_prompt": "Evaluate if this product has complete specifications for an e-commerce listing. Check for price, dimensions, weight, and key features."
+}
+```
+
+**Response includes:**
+
+```json
+{
+  "results": [{
+    "quality_score": 4,
+    "quality_result": {
+      "score": 4,
+      "explanation": "Good product data with most key specs",
+      "issues": ["Missing exact dimensions"],
+      "suggestions": ["Add product dimensions in inches/cm"]
+    }
+  }]
+}
+```
+
+## Async Mode
+
+For large batches, use async mode:
+
+```bash
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Find product details",
+    "items": [...],
+    "output_schema": [...],
+    "async_mode": true
+  }'
+```
+
+**Immediate response:**
+
+```json
+{
+  "job_id": "abc123-...",
+  "results": [],
+  "status": "running"
+}
+```
+
+**Check job status:**
+
+```bash
+curl "https://catalogapi.rastro.ai/api/activities/{job_id}" \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+**Get staged changes:**
+
+```bash
+curl "https://catalogapi.rastro.ai/api/activities/{job_id}/staged-changes" \
+  -H "Authorization: Bearer rastro_pk_..."
+```
+
+## AI Transparency
+
+Every result includes `review_info` with AI reasoning:
+
+```json
+{
+  "review_info": {
+    "reasoning": "Found price on official Apple store page, weight from tech specs section",
+    "confidence": "high",
+    "flags": ["price_may_vary_by_region"]
+  }
+}
+```
 
 <Tip>
 **Need more control?** Use [Flows](/flows/quickstart) to build reusable pipelines with transformations, filters, and multi-step enrichment.

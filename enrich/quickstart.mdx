@@ -29,6 +29,7 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
 
 ```json
 {
+  "job_id": "abc123-...",
   "results": [
     {
       "original_data": {"name": "iPhone 15 Pro"},
@@ -43,11 +44,13 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
         }
       },
       "all_sources": ["https://apple.com/..."],
-      "error": null
+      "staged_change_id": "def456-..."
     }
   ],
   "total_items": 1,
-  "successful": 1
+  "successful": 1,
+  "credits_used": 1,
+  "status": "completed"
 }
 ```
 
@@ -60,6 +63,12 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
 | `output_schema` | Yes | - | List of field definitions: `[{name, type, description}, ...]` |
 | `allowed_domains` | No | any | Restrict web sources to these domains only |
 | `speed` | No | `"medium"` | `"fast"`, `"medium"`, or `"slow"` |
+| `taxonomy` | No | - | Taxonomy definition for category prediction |
+| `predict_taxonomy` | No | `false` | If true, predict category for each item |
+| `quality_prompt` | No | - | Prompt for quality scoring (adds 1-5 score) |
+| `async_mode` | No | `false` | Return immediately with job_id |
+| `stage_changes` | No | `true` | Save results for review workflow |
+| `catalog_id` | No | - | Link enrichment job to a catalog |
 
 **Field types:** `string`, `number`, `integer`, `boolean`, `array`
 
@@ -105,6 +114,37 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
   }'
 ```
 
+## Async mode
+
+For large batches, use async mode to get a job_id immediately:
+
+```bash
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
+  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Find product details",
+    "items": [...100 items...],
+    "output_schema": [...],
+    "async_mode": true
+  }'
+```
+
+**Response (immediate):**
+
+```json
+{
+  "job_id": "abc123-...",
+  "results": [],
+  "total_items": 100,
+  "successful": 0,
+  "credits_used": 0,
+  "status": "running"
+}
+```
+
+Then check status via `GET /activities/{job_id}` or view staged changes via `GET /activities/{job_id}/staged-changes`.
+
 ## Python example
 
 ```python
@@ -134,6 +174,7 @@ response = requests.post(
 )
 
 result = response.json()
+print(f"Job ID: {result['job_id']}")
 print(f"Processed {result['total_items']} items, {result['successful']} successful")
 
 for item_result in result["results"]:
