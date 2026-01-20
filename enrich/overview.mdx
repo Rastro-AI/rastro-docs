@@ -103,15 +103,76 @@ Each item in `results` contains:
 | `error` | string | Error message if enrichment failed (null on success) |
 | `category_id` | string | Predicted taxonomy node ID (if `predict_taxonomy=true`) |
 | `category_path` | string | Full category path (e.g., "Electronics > Phones > Smartphones") |
+| `category_sources` | array | URLs used to determine the category (if `predict_taxonomy=true`) |
 | `taxonomy_attributes` | object | Predicted taxonomy-specific attributes |
+| `taxonomy_attribute_sources` | object | Sources for each taxonomy attribute (URLs or `INPUT:field_name`) |
 | `quality_score` | integer | Quality score 1-5 (if `quality_prompt` provided) |
 | `quality_result` | object | Full quality assessment with `{score, explanation, issues, suggestions}` |
 | `review_info` | object | AI reasoning and flags for human review |
 | `staged_change_id` | string | ID of the staged change record (if `stage_changes=true`) |
 
+## Source Citations
+
+Every enriched field includes source citations showing where the data was extracted from.
+
+### Web Sources
+
+When data is found on the web, sources are URLs:
+
+```json
+{
+  "enriched_fields": {
+    "price": {
+      "value": "$999",
+      "sources": [
+        "https://apple.com/shop/buy-iphone/iphone-15-pro",
+        "https://apple.com/iphone-15-pro/specs"
+      ]
+    },
+    "weight": {
+      "value": "187 grams",
+      "sources": ["https://apple.com/iphone-15-pro/specs"]
+    }
+  }
+}
+```
+
+### Input Data Fallback
+
+When a field value matches input data and no web sources are found, the source is marked with `INPUT:` prefix:
+
+```json
+{
+  "items": [{"sku": "PROD-001", "name": "Steel Bar 4130"}],
+  "output_schema": [
+    {"name": "sku", "type": "string", "description": "Product SKU"},
+    {"name": "material_grade", "type": "string", "description": "Material grade"}
+  ]
+}
+```
+
+**Response:**
+
+```json
+{
+  "enriched_fields": {
+    "sku": {
+      "value": "PROD-001",
+      "sources": ["INPUT:sku"]
+    },
+    "material_grade": {
+      "value": "4130",
+      "sources": ["https://supplier.com/product/steel-bar"]
+    }
+  }
+}
+```
+
+The `INPUT:field_name` format indicates the value was taken from the input data field (case-insensitive matching with substring support).
+
 ## Taxonomy Prediction
 
-Add automatic category classification:
+Add automatic category classification with source citations for categories and attributes.
 
 ```json
 {
@@ -124,24 +185,52 @@ Add automatic category classification:
     "hierarchy_levels": ["Category", "Subcategory"],
     "nodes": {
       "audio": {"name": "Audio", "parent": null},
-      "headphones": {"name": "Headphones", "parent": "audio"},
+      "headphones": {
+        "name": "Headphones",
+        "parent": "audio",
+        "attributes": [
+          {"name": "Driver Size", "type": "string"},
+          {"name": "Noise Cancelling", "type": "boolean"}
+        ]
+      },
       "earbuds": {"name": "Earbuds", "parent": "audio"}
     }
   }
 }
 ```
 
-**Response includes:**
+**Response includes category and attribute sources:**
 
 ```json
 {
   "results": [{
     "category_id": "headphones",
     "category_path": "Audio > Headphones",
-    "taxonomy_attributes": {...}
+    "category_sources": [
+      "https://sony.com/headphones/wh-1000xm5",
+      "https://techreviews.com/sony-wh1000xm5-review"
+    ],
+    "taxonomy_attributes": {
+      "Driver Size": "40mm",
+      "Noise Cancelling": true
+    },
+    "taxonomy_attribute_sources": {
+      "Driver Size": ["https://sony.com/headphones/wh-1000xm5/specs"],
+      "Noise Cancelling": ["https://sony.com/headphones/wh-1000xm5", "INPUT:product_features"]
+    }
   }]
 }
 ```
+
+### Taxonomy Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `category_id` | string | Predicted taxonomy node ID |
+| `category_path` | string | Full category path (e.g., "Audio > Headphones") |
+| `category_sources` | array | URLs used to determine the category |
+| `taxonomy_attributes` | object | Predicted category-specific attributes |
+| `taxonomy_attribute_sources` | object | Sources for each taxonomy attribute (URLs or `INPUT:field_name`) |
 
 ## Quality Scoring
 
