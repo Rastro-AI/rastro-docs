@@ -287,19 +287,34 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
 }
 ```
 
-**Check job status:**
+**Poll for results:**
 
 ```bash
-curl "https://catalogapi.rastro.ai/api/activities/{job_id}" \
+curl "https://catalogapi.rastro.ai/api/public/enrich/{job_id}" \
   -H "Authorization: Bearer rastro_pk_..."
 ```
 
-**Get staged changes:**
+**Response (when complete):**
 
-```bash
-curl "https://catalogapi.rastro.ai/api/activities/{job_id}/staged-changes" \
-  -H "Authorization: Bearer rastro_pk_..."
+```json
+{
+  "job_id": "abc123-...",
+  "results": [
+    {
+      "original_data": {"name": "iPhone 15 Pro"},
+      "enriched_fields": {...},
+      "all_sources": [...]
+    }
+  ],
+  "status": "completed",
+  "successful": 10,
+  "credits_used": 10
+}
 ```
+
+<Tip>
+See [GET /public/enrich/{'{job_id}'}](/enrich/get-job) for full polling endpoint documentation.
+</Tip>
 
 ## AI Transparency
 
