@@ -61,8 +61,7 @@ When the job finishes:
 | Status | Description |
 |--------|-------------|
 | `running` | Job is still processing |
-| `completed` | Job finished successfully (when `stage_changes=false`) |
-| `pending_review` | Job finished, staged changes await review (when `stage_changes=true`) |
+| `pending_review` | Job finished, results staged for review |
 | `failed` | Job failed - check activity logs for details |
 
 ## Response Fields
@@ -117,16 +116,11 @@ console.log(`Enriched ${result.successful} items`);
 console.log(result.results);
 ```
 
-## Works With Both stage_changes Modes
+## Staged Changes
 
-This endpoint returns results regardless of the `stage_changes` setting used when creating the job:
+All enrichment results are stored as staged changes for review. Each result includes a `staged_change_id` which you can use with the [staged changes API](/catalogs/staged-changes) for review workflows.
 
-- **`stage_changes=true`** (default): Results are retrieved from staged changes
-- **`stage_changes=false`**: Results are retrieved from the activity output
-
-<Note>
-When `stage_changes=true`, results include `staged_change_id` for each item, which you can use with the [staged changes API](/catalogs/staged-changes) for review workflows.
-</Note>
+Use `staged_status="draft"` when creating the job if you want vendor-only drafts (not visible to admin until submitted).
 
 ## Error Handling
 

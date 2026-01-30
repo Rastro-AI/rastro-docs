@@ -61,7 +61,7 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
 | `predict_taxonomy` | boolean | No | `false` | If true and taxonomy provided, predict category_id for each item |
 | `quality_prompt` | string | No | - | Prompt for quality scoring (e.g., "Evaluate if product has complete specs"). Adds 1-5 quality score |
 | `async_mode` | boolean | No | `false` | If true, returns immediately with job_id instead of waiting |
-| `stage_changes` | boolean | No | `true` | If true, writes results to staged changes for review workflow |
+| `staged_status` | string | No | `"pending"` | Status for staged changes: `"pending"` (visible to admin) or `"draft"` (vendor draft) |
 | `catalog_id` | string | No | - | Optional catalog ID to link this enrichment job to |
 
 ## Output Schema
@@ -109,7 +109,7 @@ Each item in `results` contains:
 | `quality_score` | integer | Quality score 1-5 (if `quality_prompt` provided) |
 | `quality_result` | object | Full quality assessment with `{score, explanation, issues, suggestions}` |
 | `review_info` | object | AI reasoning and flags for human review |
-| `staged_change_id` | string | ID of the staged change record (if `stage_changes=true`) |
+| `staged_change_id` | string | ID of the staged change record |
 
 ## Source Citations
 
