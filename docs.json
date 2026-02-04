@@ -8,9 +8,9 @@
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#60A5FA",
-    "light": "#3B82F6",
-    "dark": "#93C5FD"
+    "primary": "#F59E0B",
+    "light": "#FBBF24",
+    "dark": "#D97706"
   },
   "topbarCtaButton": {
     "name": "Dashboard",
@@ -23,27 +23,16 @@
         "pages": ["introduction", "quickstart", "authentication"]
       },
       {
-        "group": "Enrich",
-        "pages": ["enrich/quickstart", "enrich/overview", "enrich/get-job"]
+        "group": "Enrich API",
+        "pages": ["enrich/quickstart", "enrich/reference", "enrich/examples"]
       },
       {
         "group": "Flows",
-        "pages": ["flows/quickstart", "flows/execute", "flows/status"]
+        "pages": ["flows/quickstart", "flows/reference", "flows/examples"]
       },
       {
         "group": "Catalogs",
-        "pages": [
-          "catalogs/quickstart",
-          "catalogs/list",
-          "catalogs/create",
-          "catalogs/items",
-          "catalogs/get-item",
-          "catalogs/update-item",
-          "catalogs/bulk",
-          "catalogs/enrich",
-          "catalogs/enrich-status",
-          "catalogs/enrich-cancel"
-        ]
+        "pages": ["catalogs/quickstart", "catalogs/reference", "catalogs/examples"]
       }
     ]
   },

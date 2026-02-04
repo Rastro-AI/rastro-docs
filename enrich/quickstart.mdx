@@ -1,52 +1,98 @@
 ---
 title: 'Enrich Quickstart'
+description: 'Enrich your first product in under 2 minutes'
 ---
 
-Enrich any JSON data with AI-powered web research. No catalog required — just pass your items and define what fields to extract.
+## 1. Get your API key
 
-**How it works:**
-1. Send items + output schema defining fields to extract
-2. AI searches the web and extracts the specified fields (items processed concurrently)
-3. Get enriched fields with source citations (URLs) for each value
+[dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys) → Create New Key → Copy it.
 
-## Basic request
+## 2. Enrich your first item
 
-```bash
+<CodeGroup>
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "items": [{"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"}],
+        "output_schema": [
+            {"name": "bore_diameter", "type": "string", "description": "Inner diameter in mm"},
+            {"name": "outer_diameter", "type": "string", "description": "Outer diameter in mm"},
+            {"name": "manufacturer", "type": "string", "description": "Brand or manufacturer name"}
+        ],
+        "speed": "fast"
+    }
+)
+print(response.json())
+```
+
+```bash cURL
 curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
-  -H "Authorization: Bearer rastro_pk_..." \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "prompt": "Find product specifications",
-    "items": [{"name": "iPhone 15 Pro"}],
+    "items": [{"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"}],
     "output_schema": [
-      {"name": "price", "type": "string", "description": "Current retail price"},
-      {"name": "weight", "type": "string", "description": "Product weight with units"}
-    ]
+      {"name": "bore_diameter", "type": "string", "description": "Inner diameter in mm"},
+      {"name": "outer_diameter", "type": "string", "description": "Outer diameter in mm"},
+      {"name": "manufacturer", "type": "string", "description": "Brand or manufacturer name"}
+    ],
+    "speed": "fast"
   }'
 ```
 
-**Response:**
+```typescript TypeScript
+const response = await fetch("https://catalogapi.rastro.ai/api/public/enrich", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer YOUR_API_KEY",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    items: [{ part_number: "6205-2RS", name: "Deep Groove Ball Bearing" }],
+    output_schema: [
+      { name: "bore_diameter", type: "string", description: "Inner diameter in mm" },
+      { name: "outer_diameter", type: "string", description: "Outer diameter in mm" },
+      { name: "manufacturer", type: "string", description: "Brand or manufacturer name" }
+    ],
+    speed: "fast"
+  })
+});
+console.log(await response.json());
+```
+
+</CodeGroup>
+
+<Note>
+Use `"speed": "fast"` for quick testing (~1 min). For production, use `"slow"` for comprehensive results (10-15 min).
+</Note>
+
+## 3. Response
 
 ```json
 {
-  "job_id": "abc123-...",
-  "results": [
-    {
-      "original_data": {"name": "iPhone 15 Pro"},
-      "enriched_fields": {
-        "price": {
-          "value": "$999",
-          "sources": ["https://apple.com/shop/buy-iphone/iphone-15-pro"]
-        },
-        "weight": {
-          "value": "187 grams",
-          "sources": ["https://apple.com/iphone-15-pro/specs"]
-        }
+  "job_id": "abc123-def456-...",
+  "results": [{
+    "original_data": {"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"},
+    "enriched_fields": {
+      "bore_diameter": {
+        "value": "25 mm",
+        "sources": ["https://skf.com/products/bearings/6205-2RS"]
       },
-      "all_sources": ["https://apple.com/..."],
-      "staged_change_id": "def456-..."
+      "outer_diameter": {
+        "value": "52 mm",
+        "sources": ["https://skf.com/products/bearings/6205-2RS"]
+      },
+      "manufacturer": {
+        "value": "SKF",
+        "sources": ["https://skf.com/products/bearings/6205-2RS"]
+      }
     }
-  ],
+  }],
   "total_items": 1,
   "successful": 1,
   "credits_used": 1,
@@ -54,138 +100,17 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
 }
 ```
 
-## Parameters
+Every field includes source URLs so you can verify the data.
 
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `prompt` | Yes | - | Search prompt for web enrichment |
-| `items` | Yes | - | List of JSON objects to enrich |
-| `output_schema` | Yes | - | List of field definitions: `[{name, type, description}, ...]` |
-| `allowed_domains` | No | any | Restrict web sources to these domains only |
-| `speed` | No | `"medium"` | `"fast"`, `"medium"`, or `"slow"` |
-| `taxonomy` | No | - | Taxonomy definition for category prediction |
-| `predict_taxonomy` | No | `false` | If true, predict category for each item |
-| `quality_prompt` | No | - | Prompt for quality scoring (adds 1-5 score) |
-| `async_mode` | No | `false` | Return immediately with job_id |
-| `stage_changes` | No | `true` | Save results for review workflow |
-| `catalog_id` | No | - | Link enrichment job to a catalog |
+---
 
-**Field types:** `string`, `number`, `integer`, `boolean`, `array`
+## What's Next
 
-## Multiple items
-
-Items are processed concurrently:
-
-```bash
-curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
-  -H "Authorization: Bearer rastro_pk_..." \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Find product specifications",
-    "items": [
-      {"name": "iPhone 15 Pro"},
-      {"name": "Samsung Galaxy S24"}
-    ],
-    "output_schema": [
-      {"name": "price", "type": "string", "description": "Current retail price"},
-      {"name": "display", "type": "string", "description": "Screen size and type"},
-      {"name": "battery", "type": "string", "description": "Battery capacity"}
-    ]
-  }'
-```
-
-## Domain restrictions
-
-Restrict web sources to specific domains:
-
-```bash
-curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
-  -H "Authorization: Bearer rastro_pk_..." \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Find official specs",
-    "items": [{"name": "MacBook Pro 16"}],
-    "output_schema": [
-      {"name": "cpu", "type": "string", "description": "Processor model"},
-      {"name": "ram", "type": "string", "description": "Memory options"},
-      {"name": "price", "type": "string", "description": "Starting price"}
-    ],
-    "allowed_domains": ["apple.com"]
-  }'
-```
-
-## Async mode
-
-For large batches, use async mode to get a job_id immediately:
-
-```bash
-curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
-  -H "Authorization: Bearer rastro_pk_..." \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Find product details",
-    "items": [...100 items...],
-    "output_schema": [...],
-    "async_mode": true
-  }'
-```
-
-**Response (immediate):**
-
-```json
-{
-  "job_id": "abc123-...",
-  "results": [],
-  "total_items": 100,
-  "successful": 0,
-  "credits_used": 0,
-  "status": "running"
-}
-```
-
-Then check status via `GET /activities/{job_id}` or view staged changes via `GET /activities/{job_id}/staged-changes`.
-
-## Python example
-
-```python
-import requests
-
-API_KEY = "rastro_pk_..."
-BASE_URL = "https://catalogapi.rastro.ai/api"
-
-response = requests.post(
-    f"{BASE_URL}/public/enrich",
-    headers={
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
-    },
-    json={
-        "prompt": "Find product specifications",
-        "items": [
-            {"name": "Sony WH-1000XM5"},
-            {"name": "Apple AirPods Pro 2"}
-        ],
-        "output_schema": [
-            {"name": "price", "type": "string", "description": "Current retail price"},
-            {"name": "weight", "type": "string", "description": "Product weight"},
-            {"name": "battery_life", "type": "string", "description": "Battery duration"}
-        ]
-    }
-)
-
-result = response.json()
-print(f"Job ID: {result['job_id']}")
-print(f"Processed {result['total_items']} items, {result['successful']} successful")
-
-for item_result in result["results"]:
-    print(f"\n{item_result['original_data']['name']}:")
-    for field, data in item_result["enriched_fields"].items():
-        print(f"  {field}: {data['value']}")
-        print(f"    Sources: {data['sources']}")
-```
-
-<Tip>
-**Need more control?** Use [Flows](/flows/quickstart) to build reusable pipelines with transformations, filters, and multi-step enrichment.
-</Tip>
-
--> [Full API reference](/enrich/overview)
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="book" href="/enrich/reference">
+    All parameters and response fields
+  </Card>
+  <Card title="Examples" icon="code" href="/enrich/examples">
+    Async mode, domain filtering, taxonomy, quality scoring
+  </Card>
+</CardGroup>

@@ -1,0 +1,253 @@
+---
+title: 'Enrich API Reference'
+description: 'Complete API documentation for the Enrich endpoint'
+---
+
+## POST /public/enrich
+
+Enrich items with AI-powered web research. Every extracted field includes source URLs.
+
+<CodeGroup>
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "items": [{"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"}],
+        "output_schema": [
+            {"name": "bore_diameter", "type": "string", "description": "Inner diameter in mm"},
+            {"name": "outer_diameter", "type": "string", "description": "Outer diameter in mm"}
+        ]
+    }
+)
+```
+
+```bash cURL
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [{"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"}],
+    "output_schema": [
+      {"name": "bore_diameter", "type": "string", "description": "Inner diameter in mm"},
+      {"name": "outer_diameter", "type": "string", "description": "Outer diameter in mm"}
+    ]
+  }'
+```
+
+```typescript TypeScript
+const response = await fetch("https://catalogapi.rastro.ai/api/public/enrich", {
+  method: "POST",
+  headers: { "Authorization": "Bearer YOUR_API_KEY", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    items: [{ part_number: "6205-2RS", name: "Deep Groove Ball Bearing" }],
+    output_schema: [
+      { name: "bore_diameter", type: "string", description: "Inner diameter in mm" },
+      { name: "outer_diameter", type: "string", description: "Outer diameter in mm" }
+    ]
+  })
+});
+```
+
+</CodeGroup>
+
+---
+
+## Request Parameters
+
+### Core Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `items` | array | Yes | - | JSON objects to enrich |
+| `output_schema` | array | Yes | - | Fields to extract (see [Output Schema](#output-schema)) |
+| `prompt` | string | No | `""` | Search prompt guiding web research |
+
+### Search Options
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `speed` | string | `"medium"` | `"fast"` (~1 min), `"medium"` (~2 min), `"slow"` (10-15 min, most thorough) |
+| `allowed_domains` | array | any | Restrict sources to these domains only |
+| `web_search` | boolean | `true` | Set `false` to skip web search and use input data directly |
+
+### Taxonomy & Quality
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `taxonomy` | object | - | Taxonomy definition for category prediction |
+| `predict_taxonomy` | boolean | `false` | Predict category for each item |
+| `quality_prompt` | string | - | Prompt for quality scoring (adds 1-5 score) |
+| `validate_semantics` | boolean | `false` | AI validates values match field descriptions |
+
+### Job Control
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `async_mode` | boolean | `false` | Return immediately with `job_id` |
+| `max_rows` | integer | - | Process only first N items (dry run) |
+| `source_activity_id` | string | - | Resume from previous job to process remaining items |
+| `include_source_explanations` | boolean | `false` | Add explanation for each field value |
+
+---
+
+## Output Schema
+
+Define fields to extract. Each field needs a `name`, `type`, and `description`.
+
+```json
+{
+  "output_schema": [
+    {"name": "material", "type": "string", "description": "Material composition"},
+    {"name": "weight_kg", "type": "number", "description": "Weight in kilograms", "unit": "kg"},
+    {"name": "certifications", "type": "array", "description": "Safety certifications"}
+  ]
+}
+```
+
+### Field Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `name` | string | Field name (required) |
+| `type` | string | `string`, `number`, `integer`, `boolean`, `array` |
+| `description` | string | What to extract (required) |
+| `unit` | string | Units for numbers (e.g., `"kg"`, `"mm"`) |
+| `enum` | array | Constrain to specific values |
+| `sample_values` | array | Example values to guide extraction |
+| `array_element_type` | string | For arrays: `string`, `number`, `image_url` |
+
+---
+
+## Response
+
+```json
+{
+  "job_id": "abc123-def456-...",
+  "results": [{
+    "original_data": {"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"},
+    "enriched_fields": {
+      "bore_diameter": {"value": "25 mm", "sources": ["https://skf.com/..."]},
+      "outer_diameter": {"value": "52 mm", "sources": ["https://skf.com/..."]}
+    },
+    "all_sources": ["https://skf.com/..."]
+  }],
+  "total_items": 1,
+  "successful": 1,
+  "credits_used": 1,
+  "status": "completed"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `job_id` | string | Job ID for tracking |
+| `results` | array | Enriched items (empty if `async_mode=true`) |
+| `total_items` | integer | Items processed |
+| `total_rows` | integer | Total items before `max_rows` limit |
+| `successful` | integer | Successfully enriched items |
+| `credits_used` | integer | Credits used (1 per item) |
+| `status` | string | `"running"` or `"completed"` |
+
+### Result Item Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `original_data` | object | Input data |
+| `enriched_fields` | object | `{field: {value, sources[]}}` |
+| `all_sources` | array | All URLs scraped |
+| `error` | string | Error message if failed |
+| `category_id` | string | Predicted category (if taxonomy enabled) |
+| `category_path` | string | Full path like `"Bearings > Ball Bearings"` |
+| `taxonomy_attributes` | object | Category-specific attributes |
+| `quality_score` | integer | 1-5 score (if `quality_prompt` set) |
+| `quality_result` | object | `{score, explanation, issues, suggestions}` |
+| `review_info` | object | AI reasoning and flags |
+
+---
+
+## GET /public/enrich/{job_id}
+
+Poll enrichment job status and retrieve results.
+
+<CodeGroup>
+
+```python Python
+response = requests.get(
+    f"https://catalogapi.rastro.ai/api/public/enrich/{job_id}",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+print(response.json())
+```
+
+```bash cURL
+curl "https://catalogapi.rastro.ai/api/public/enrich/{job_id}" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```typescript TypeScript
+const response = await fetch(`https://catalogapi.rastro.ai/api/public/enrich/${jobId}`, {
+  headers: { "Authorization": "Bearer YOUR_API_KEY" }
+});
+console.log(await response.json());
+```
+
+</CodeGroup>
+
+### Status Values
+
+| Status | Description |
+|--------|-------------|
+| `running` | Job is processing |
+| `completed` | Job finished successfully |
+| `pending_review` | Results staged for review |
+| `failed` | Job failed |
+
+---
+
+## Source Citations
+
+Every field includes URLs showing where data was found.
+
+```json
+{
+  "enriched_fields": {
+    "bore_diameter": {
+      "value": "25 mm",
+      "sources": ["https://skf.com/products/bearings/6205-2RS"]
+    }
+  }
+}
+```
+
+When a value comes from input data, the source shows `INPUT:field_name`:
+
+```json
+{
+  "part_number": {
+    "value": "6205-2RS",
+    "sources": ["INPUT:part_number"]
+  }
+}
+```
+
+---
+
+## AI Transparency
+
+Every result includes `review_info` with AI reasoning:
+
+```json
+{
+  "review_info": {
+    "reasoning": "Found specs on manufacturer website, cross-referenced with distributor",
+    "confidence": "high",
+    "flags": ["verify_tolerance_class"]
+  }
+}
+```

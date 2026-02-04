@@ -1,28 +1,49 @@
 ---
 title: 'Flows Quickstart'
+description: 'Create and execute visual data pipelines'
 ---
 
-Flows are reusable data pipelines you build visually, then execute via API or dashboard. Perfect for recurring enrichment tasks.
+Flows are reusable data pipelines you build visually in the dashboard, then execute via API or UI. Perfect for recurring enrichment tasks.
 
 ## 1. Create a flow from a template
 
 1. Go to [dashboard.rastro.ai/flows](https://dashboard.rastro.ai/flows)
 2. Click **Templates**
-3. Select **Competitor Pricing**
+3. Select **Competitor Pricing** (or another template)
 4. Upload your CSV
 5. Click **Run**
 
-That's it — your flow will process each row and enrich it with competitor pricing data.
+That's it — your flow will process each row and enrich it with the configured data.
 
 ## 2. Execute via API
 
-Once you have a flow, you can also trigger it programmatically.
+Once you have a flow, you can trigger it programmatically.
 
 Get your Flow ID from the URL: `dashboard.rastro.ai/flows/{FLOW_ID}/edit`
 
-```bash
-curl -X POST https://catalogapi.rastro.ai/api/public/workflows/{FLOW_ID}/execute \
-  -H "Authorization: Bearer rastro_pk_..." \
+<CodeGroup>
+
+```python Python
+import requests
+
+FLOW_ID = "your-flow-id"
+
+response = requests.post(
+    f"https://catalogapi.rastro.ai/api/public/workflows/{FLOW_ID}/execute",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "input": [
+            {"sku": "A1", "title": "Product A"},
+            {"sku": "A2", "title": "Product B"}
+        ]
+    }
+)
+print(response.json())
+```
+
+```bash cURL
+curl -X POST "https://catalogapi.rastro.ai/api/public/workflows/{FLOW_ID}/execute" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "input": [
@@ -31,6 +52,27 @@ curl -X POST https://catalogapi.rastro.ai/api/public/workflows/{FLOW_ID}/execute
     ]
   }'
 ```
+
+```typescript TypeScript
+const FLOW_ID = "your-flow-id";
+
+const response = await fetch(`https://catalogapi.rastro.ai/api/public/workflows/${FLOW_ID}/execute`, {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer YOUR_API_KEY",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    input: [
+      { sku: "A1", title: "Product A" },
+      { sku: "A2", title: "Product B" }
+    ]
+  })
+});
+console.log(await response.json());
+```
+
+</CodeGroup>
 
 **Response:**
 
@@ -43,12 +85,31 @@ curl -X POST https://catalogapi.rastro.ai/api/public/workflows/{FLOW_ID}/execute
 
 ## 3. Check status and get results
 
-```bash
-curl https://catalogapi.rastro.ai/api/public/workflows/runs/run_abc123 \
-  -H "Authorization: Bearer rastro_pk_..."
+<CodeGroup>
+
+```python Python
+response = requests.get(
+    "https://catalogapi.rastro.ai/api/public/workflows/runs/run_abc123",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+print(response.json())
 ```
 
-**Response (when complete):**
+```bash cURL
+curl "https://catalogapi.rastro.ai/api/public/workflows/runs/run_abc123" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```typescript TypeScript
+const response = await fetch("https://catalogapi.rastro.ai/api/public/workflows/runs/run_abc123", {
+  headers: { "Authorization": "Bearer YOUR_API_KEY" }
+});
+console.log(await response.json());
+```
+
+</CodeGroup>
+
+**Response (completed):**
 
 ```json
 {
@@ -62,6 +123,8 @@ curl https://catalogapi.rastro.ai/api/public/workflows/runs/run_abc123 \
 }
 ```
 
+---
+
 ## Flows vs Enrich API
 
 | Feature | Enrich API | Flows |
@@ -69,6 +132,17 @@ curl https://catalogapi.rastro.ai/api/public/workflows/runs/run_abc123 \
 | Setup | None | Build in dashboard |
 | Best for | One-off enrichment | Recurring pipelines |
 | Customization | Prompt + schema | Full visual editor |
-| Processing | Synchronous | Async with status polling |
+| Processing | Sync or async | Async with status polling |
 
--> [Execute endpoint](/flows/execute) | [Status endpoint](/flows/status)
+---
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="book" href="/flows/reference">
+    All endpoints and parameters
+  </Card>
+  <Card title="Examples" icon="code" href="/flows/examples">
+    Python and TypeScript examples
+  </Card>
+</CardGroup>

@@ -1,0 +1,462 @@
+---
+title: 'Enrich Examples'
+description: 'Practical examples for common enrichment use cases'
+---
+
+## Basic Enrichment
+
+<CodeGroup>
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "items": [{"part_number": "91251A545", "name": "Hex Head Cap Screw"}],
+        "output_schema": [
+            {"name": "material", "type": "string", "description": "Material composition"},
+            {"name": "thread_size", "type": "string", "description": "Thread size specification"},
+            {"name": "length", "type": "string", "description": "Screw length"}
+        ],
+        "speed": "slow"
+    }
+)
+print(response.json())
+```
+
+```bash cURL
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [{"part_number": "91251A545", "name": "Hex Head Cap Screw"}],
+    "output_schema": [
+      {"name": "material", "type": "string", "description": "Material composition"},
+      {"name": "thread_size", "type": "string", "description": "Thread size specification"},
+      {"name": "length", "type": "string", "description": "Screw length"}
+    ],
+    "speed": "slow"
+  }'
+```
+
+</CodeGroup>
+
+---
+
+## Multiple Items
+
+Items are processed concurrently for speed.
+
+```python
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "items": [
+            {"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"},
+            {"part_number": "6206-2RS", "name": "Deep Groove Ball Bearing"},
+            {"part_number": "6207-2RS", "name": "Deep Groove Ball Bearing"}
+        ],
+        "output_schema": [
+            {"name": "bore_diameter", "type": "string", "description": "Inner diameter in mm"},
+            {"name": "outer_diameter", "type": "string", "description": "Outer diameter in mm"},
+            {"name": "width", "type": "string", "description": "Bearing width in mm"}
+        ],
+        "speed": "slow"
+    }
+)
+```
+
+---
+
+## Domain Restrictions
+
+Only pull data from specific manufacturer or distributor sites.
+
+```python
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "items": [{"part_number": "6ES7214-1AG40-0XB0", "name": "SIMATIC S7-1200 CPU"}],
+        "output_schema": [
+            {"name": "input_voltage", "type": "string", "description": "Operating voltage range"},
+            {"name": "digital_inputs", "type": "integer", "description": "Number of digital inputs"},
+            {"name": "memory", "type": "string", "description": "Work memory size"}
+        ],
+        "allowed_domains": ["siemens.com", "automation.siemens.com"],
+        "speed": "slow"
+    }
+)
+```
+
+---
+
+## Data Normalization (No Web Search)
+
+Normalize and structure data from your existing sources without web lookups. Sources trace back to your input fields.
+
+```python
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "items": [{
+            "raw_title": "SKF 6205-2RS Deep Groove Ball Bearing 25x52x15mm",
+            "description": "Sealed bearing for high-speed applications"
+        }],
+        "output_schema": [
+            {"name": "manufacturer", "type": "string", "description": "Brand name"},
+            {"name": "bore_diameter", "type": "string", "description": "Inner diameter"},
+            {"name": "outer_diameter", "type": "string", "description": "Outer diameter"},
+            {"name": "width", "type": "string", "description": "Width"}
+        ],
+        "web_search": False  # Only use input data
+    }
+)
+
+# Response sources will show INPUT:raw_title, INPUT:description
+```
+
+**Response:**
+
+```json
+{
+  "enriched_fields": {
+    "manufacturer": {
+      "value": "SKF",
+      "sources": ["INPUT:raw_title"],
+      "source_explanation": "Extracted from product title field"
+    },
+    "bore_diameter": {
+      "value": "25mm",
+      "sources": ["INPUT:raw_title"],
+      "source_explanation": "Parsed from dimensions in title"
+    }
+  }
+}
+```
+
+---
+
+## Async Mode
+
+For large batches, get a job ID immediately and poll for results.
+
+```python
+import requests
+import time
+
+API_KEY = "YOUR_API_KEY"
+BASE_URL = "https://catalogapi.rastro.ai/api"
+
+# Start async job
+response = requests.post(
+    f"{BASE_URL}/public/enrich",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    json={
+        "items": [
+            {"part_number": "6205-2RS"},
+            {"part_number": "6206-2RS"},
+            {"part_number": "6207-2RS"},
+            # ... more items
+        ],
+        "output_schema": [
+            {"name": "bore_diameter", "type": "string", "description": "Inner diameter"}
+        ],
+        "async_mode": True,
+        "speed": "slow"
+    }
+)
+job_id = response.json()["job_id"]
+print(f"Job started: {job_id}")
+
+# Poll for results
+while True:
+    status = requests.get(
+        f"{BASE_URL}/public/enrich/{job_id}",
+        headers={"Authorization": f"Bearer {API_KEY}"}
+    ).json()
+
+    if status["status"] != "running":
+        break
+    print(f"Running... {status.get('successful', 0)} items complete")
+    time.sleep(5)
+
+print(f"Completed: {status['successful']} items enriched")
+for item in status["results"]:
+    print(f"  {item['original_data']}")
+    for field, data in item["enriched_fields"].items():
+        print(f"    {field}: {data['value']}")
+```
+
+---
+
+## Taxonomy Prediction
+
+Automatically classify items into your category hierarchy.
+
+```python
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "items": [{"name": "SKF 6205-2RS Deep Groove Ball Bearing"}],
+        "output_schema": [
+            {"name": "bore_diameter", "type": "string", "description": "Inner diameter"}
+        ],
+        "predict_taxonomy": True,
+        "taxonomy": {
+            "name": "Industrial Parts",
+            "hierarchy_levels": ["Category", "Type"],
+            "nodes": {
+                "bearings": {"name": "Bearings", "parent": None},
+                "ball_bearings": {
+                    "name": "Ball Bearings",
+                    "parent": "bearings",
+                    "attributes": [
+                        {"name": "Bore Size", "type": "string"},
+                        {"name": "Seal Type", "type": "string"}
+                    ]
+                }
+            }
+        }
+    }
+)
+```
+
+**Response includes:**
+
+```json
+{
+  "category_id": "ball_bearings",
+  "category_path": "Bearings > Ball Bearings",
+  "taxonomy_attributes": {
+    "Bore Size": "25 mm",
+    "Seal Type": "2RS (rubber seal)"
+  }
+}
+```
+
+---
+
+## Quality Scoring
+
+Add a quality prompt to get a 1-5 score for each item.
+
+```python
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "items": [{"part_number": "6205-2RS"}],
+        "output_schema": [
+            {"name": "bore_diameter", "type": "string", "description": "Inner diameter"},
+            {"name": "load_rating", "type": "string", "description": "Dynamic load rating"}
+        ],
+        "quality_prompt": "Evaluate if product has complete specs for procurement"
+    }
+)
+```
+
+**Response includes:**
+
+```json
+{
+  "quality_score": 4,
+  "quality_result": {
+    "score": 4,
+    "explanation": "Complete dimensions, missing load ratings",
+    "issues": ["No dynamic load rating"],
+    "suggestions": ["Add C and C0 load ratings"]
+  }
+}
+```
+
+---
+
+## Dry Runs
+
+Use `max_rows` to test with a subset before processing everything.
+
+```python
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "items": large_item_list,  # 1000+ items
+        "output_schema": schema,
+        "max_rows": 10  # Only process first 10
+    }
+)
+
+# Later, process the rest using source_activity_id
+job_id = response.json()["job_id"]
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "source_activity_id": job_id,  # Resume from previous job
+        "output_schema": schema
+    }
+)
+```
+
+---
+
+## Full Python Client
+
+```python
+import requests
+import time
+
+class RastroClient:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.base_url = "https://catalogapi.rastro.ai/api"
+
+    def _headers(self):
+        return {"Authorization": f"Bearer {self.api_key}"}
+
+    def enrich(self, items, output_schema, speed="slow", **kwargs):
+        response = requests.post(
+            f"{self.base_url}/public/enrich",
+            headers=self._headers(),
+            json={
+                "items": items,
+                "output_schema": output_schema,
+                "speed": speed,
+                **kwargs
+            }
+        )
+        return response.json()
+
+    def enrich_async(self, items, output_schema, speed="slow", poll_interval=5, **kwargs):
+        # Start job
+        result = self.enrich(items, output_schema, speed, async_mode=True, **kwargs)
+        job_id = result["job_id"]
+        print(f"Started job: {job_id}")
+
+        # Poll until complete
+        while True:
+            status = requests.get(
+                f"{self.base_url}/public/enrich/{job_id}",
+                headers=self._headers()
+            ).json()
+
+            if status["status"] != "running":
+                return status
+
+            print(f"Progress: {status.get('successful', 0)}/{status.get('total_items', '?')}")
+            time.sleep(poll_interval)
+
+
+# Example usage
+client = RastroClient("YOUR_API_KEY")
+
+# Synchronous enrichment
+result = client.enrich(
+    items=[{"part_number": "6205-2RS"}],
+    output_schema=[
+        {"name": "bore_diameter", "type": "string", "description": "Inner diameter"},
+        {"name": "manufacturer", "type": "string", "description": "Brand name"}
+    ]
+)
+
+for item in result["results"]:
+    print(f"\n{item['original_data']}:")
+    for field, data in item["enriched_fields"].items():
+        print(f"  {field}: {data['value']}")
+        print(f"    Source: {data['sources'][0] if data['sources'] else 'N/A'}")
+```
+
+---
+
+## Full TypeScript Client
+
+```typescript
+const API_KEY = "YOUR_API_KEY";
+const BASE_URL = "https://catalogapi.rastro.ai/api";
+
+interface OutputField {
+  name: string;
+  type: "string" | "number" | "integer" | "boolean" | "array";
+  description: string;
+  unit?: string;
+  enum?: string[];
+}
+
+interface EnrichOptions {
+  speed?: "fast" | "medium" | "slow";
+  async_mode?: boolean;
+  allowed_domains?: string[];
+  web_search?: boolean;
+  predict_taxonomy?: boolean;
+  taxonomy?: object;
+  quality_prompt?: string;
+}
+
+async function enrich(
+  items: object[],
+  outputSchema: OutputField[],
+  options: EnrichOptions = {}
+) {
+  const response = await fetch(`${BASE_URL}/public/enrich`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      items,
+      output_schema: outputSchema,
+      ...options
+    })
+  });
+  return response.json();
+}
+
+async function enrichAsync(
+  items: object[],
+  outputSchema: OutputField[],
+  options: EnrichOptions = {},
+  pollInterval = 5000
+) {
+  const result = await enrich(items, outputSchema, { ...options, async_mode: true });
+  const jobId = result.job_id;
+  console.log(`Started job: ${jobId}`);
+
+  while (true) {
+    const response = await fetch(`${BASE_URL}/public/enrich/${jobId}`, {
+      headers: { "Authorization": `Bearer ${API_KEY}` }
+    });
+    const status = await response.json();
+
+    if (status.status !== "running") {
+      return status;
+    }
+
+    console.log(`Progress: ${status.successful || 0}/${status.total_items || "?"}`);
+    await new Promise(r => setTimeout(r, pollInterval));
+  }
+}
+
+// Example usage
+const result = await enrich(
+  [{ part_number: "6205-2RS" }],
+  [
+    { name: "bore_diameter", type: "string", description: "Inner diameter" },
+    { name: "manufacturer", type: "string", description: "Brand name" }
+  ],
+  { speed: "slow" }
+);
+
+for (const item of result.results) {
+  console.log(`\n${JSON.stringify(item.original_data)}:`);
+  for (const [field, data] of Object.entries(item.enriched_fields)) {
+    console.log(`  ${field}: ${(data as any).value}`);
+  }
+}
+```

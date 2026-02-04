@@ -1,0 +1,394 @@
+---
+title: 'Catalogs API Reference'
+description: 'Complete API documentation for Catalog endpoints'
+---
+
+## Catalog Management
+
+### GET /public/catalogs
+
+List all catalogs in your account.
+
+<CodeGroup>
+
+```python Python
+response = requests.get(
+    "https://catalogapi.rastro.ai/api/public/catalogs",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+print(response.json())
+```
+
+```bash cURL
+curl "https://catalogapi.rastro.ai/api/public/catalogs" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+</CodeGroup>
+
+**Response:**
+
+```json
+{
+  "catalogs": [
+    {"id": "cat_123", "name": "Products", "item_count": 150}
+  ]
+}
+```
+
+---
+
+### POST /public/catalogs
+
+Create a new catalog.
+
+<CodeGroup>
+
+```python Python
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/catalogs",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={"name": "Products", "unique_id_field": "sku"}
+)
+```
+
+```bash cURL
+curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Products", "unique_id_field": "sku"}'
+```
+
+</CodeGroup>
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | Yes | Catalog name |
+| `unique_id_field` | string | Yes | Field used to identify items (e.g., `sku`) |
+
+**Response:**
+
+```json
+{
+  "id": "cat_123",
+  "name": "Products",
+  "unique_id_field": "sku"
+}
+```
+
+---
+
+## Item Management
+
+### GET /public/catalogs/{catalog_id}/items
+
+List items in a catalog.
+
+<CodeGroup>
+
+```python Python
+response = requests.get(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    params={"page": 1, "limit": 100}
+)
+```
+
+```bash cURL
+curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items?page=1&limit=100" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+</CodeGroup>
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | integer | 1 | Page number |
+| `limit` | integer | 100 | Items per page (max 1000) |
+
+**Response:**
+
+```json
+{
+  "items": [
+    {"id": "item_123", "sku": "A1", "title": "Product A", "price": 29.99}
+  ],
+  "total": 150,
+  "page": 1
+}
+```
+
+---
+
+### GET /public/catalogs/{catalog_id}/items/{item_id}
+
+Get a single item by ID.
+
+<CodeGroup>
+
+```python Python
+response = requests.get(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id}",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+```
+
+```bash cURL
+curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id}" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+</CodeGroup>
+
+**Response:**
+
+```json
+{
+  "id": "item_123",
+  "sku": "A1",
+  "title": "Product A",
+  "price": 29.99
+}
+```
+
+---
+
+### PUT /public/catalogs/{catalog_id}/items/{item_id}
+
+Update a single item. Only the fields you provide will be updated.
+
+<CodeGroup>
+
+```python Python
+response = requests.put(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id}",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={"price": 24.99}
+)
+```
+
+```bash cURL
+curl -X PUT "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"price": 24.99}'
+```
+
+</CodeGroup>
+
+**Request Body:** Any fields to update.
+
+**Response:** The updated item.
+
+---
+
+### POST /public/catalogs/{catalog_id}/items/bulk
+
+Create or update up to 1000 items at once.
+
+<CodeGroup>
+
+```python Python
+response = requests.post(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/bulk",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "items": [
+            {"sku": "A1", "title": "Product A", "price": 29.99},
+            {"sku": "A2", "title": "Product B", "price": 39.99}
+        ],
+        "unique_field": "sku"
+    }
+)
+```
+
+```bash cURL
+curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/bulk" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"sku": "A1", "title": "Product A", "price": 29.99},
+      {"sku": "A2", "title": "Product B", "price": 39.99}
+    ],
+    "unique_field": "sku"
+  }'
+```
+
+</CodeGroup>
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `items` | array | Yes | Array of item objects (max 1000) |
+| `unique_field` | string | Yes | Field to match for upserts |
+
+**Response:**
+
+```json
+{
+  "created": 10,
+  "updated": 5,
+  "failed": 0
+}
+```
+
+---
+
+## Catalog Enrichment
+
+### POST /public/catalogs/{catalog_id}/enrich
+
+Start an enrichment job for all items in a catalog.
+
+<CodeGroup>
+
+```python Python
+response = requests.post(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "prompt": "Find product specifications",
+        "output_schema": [
+            {"name": "price", "type": "string", "description": "Current retail price"},
+            {"name": "weight", "type": "string", "description": "Product weight"}
+        ],
+        "speed": "slow"
+    }
+)
+```
+
+```bash cURL
+curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Find product specifications",
+    "output_schema": [
+      {"name": "price", "type": "string", "description": "Current retail price"},
+      {"name": "weight", "type": "string", "description": "Product weight"}
+    ],
+    "speed": "slow"
+  }'
+```
+
+</CodeGroup>
+
+**Request Parameters:**
+
+| Parameter | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `prompt` | Yes | - | Search prompt for web enrichment |
+| `output_schema` | Yes | - | Fields to extract: `[{name, type, description}]` |
+| `allowed_domains` | No | any | Restrict sources to these domains |
+| `speed` | No | `"medium"` | `"fast"`, `"medium"`, or `"slow"` |
+| `web_search` | No | `true` | Set `false` to skip web search |
+| `taxonomy` | No | - | Taxonomy for category prediction |
+| `predict_taxonomy` | No | `false` | Predict category for each item |
+| `quality_prompt` | No | - | Prompt for quality scoring |
+
+**Response:**
+
+```json
+{
+  "job_id": "job_abc123",
+  "status": "running",
+  "total_items": 150
+}
+```
+
+---
+
+### GET /public/catalogs/{catalog_id}/enrich/{job_id}
+
+Poll the status of a catalog enrichment job.
+
+<CodeGroup>
+
+```python Python
+response = requests.get(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+```
+
+```bash cURL
+curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+</CodeGroup>
+
+**Response (running):**
+
+```json
+{
+  "job_id": "job_abc123",
+  "status": "running",
+  "total_items": 150,
+  "completed_items": 45,
+  "failed_items": 2
+}
+```
+
+**Response (completed):**
+
+```json
+{
+  "job_id": "job_abc123",
+  "status": "completed",
+  "total_items": 150,
+  "completed_items": 148,
+  "failed_items": 2
+}
+```
+
+**Status Values:**
+
+| Status | Description |
+|--------|-------------|
+| `running` | Job in progress |
+| `completed` | Job finished |
+| `failed` | Job failed |
+| `cancelled` | Job was cancelled |
+
+---
+
+### POST /public/catalogs/{catalog_id}/enrich/{job_id}/cancel
+
+Cancel a running enrichment job.
+
+<CodeGroup>
+
+```python Python
+response = requests.post(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}/cancel",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+```
+
+```bash cURL
+curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}/cancel" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+</CodeGroup>
+
+**Response:**
+
+```json
+{
+  "job_id": "job_abc123",
+  "status": "cancelled",
+  "total_items": 150,
+  "completed_items": 45,
+  "failed_items": 0
+}
+```
+
+Items enriched before cancellation keep their data.

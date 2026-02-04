@@ -1,39 +1,123 @@
 ---
-title: 'Welcome to Rastro'
-description: 'Best in class e-commerce catalog enrichment.'
+title: 'Rastro'
+description: 'AI-powered catalog enrichment and normalization with enterprise-grade data governance'
 ---
+
+Transform raw product data into complete, structured catalogs. Every field is validated, sourced, and ready for production. Fully compatible with your existing PIM and ERP schemas.
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Get up and running in 2 minutes
+    Enrich your first item in 2 minutes
   </Card>
-  <Card title="Enrich" icon="sparkles" href="/enrich/quickstart">
-    Research products and extract data from the web
-  </Card>
-  <Card title="Flows" icon="diagram-project" href="/flows/quickstart">
-    Build custom data pipelines in the dashboard
-  </Card>
-  <Card title="Catalogs" icon="database" href="/catalogs/quickstart">
-    Store and manage your product data
+  <Card title="API Reference" icon="code" href="/enrich/reference">
+    Full endpoint documentation
   </Card>
 </CardGroup>
 
-## What is Rastro?
+---
 
-Rastro is the fastest way to enrich and transform catalog data to launch products faster. Simply define the information you need and what you have, and receive it with citations.
+## Why Rastro?
 
-```bash
-curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
-  -H "Authorization: Bearer rastro_pk_..." \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Find product specifications",
-    "items": [{"name": "iPhone 15 Pro"}],
-    "output_schema": [
-      {"name": "price", "type": "string", "description": "Current retail price"},
-      {"name": "weight", "type": "string", "description": "Product weight with units"}
-    ]
-  }'
+### Auto-Scaling Infrastructure
+
+Processing 30,000+ SKUs is complex — managing queues, handling failures, rate limiting, and scaling workers. Rastro handles all of this for you. Just send your data and we process it at scale.
+
+### Complex Sources with Full Traceability
+
+Every enriched value includes sources showing where data was found, plus optional explanations of how values were derived. No black boxes—audit any data point back to its origin.
+
+Sources can be web URLs, input fields, PDFs, or any data you provide:
+
+```json
+{
+  "material": {
+    "value": "316 Stainless Steel",
+    "sources": ["https://mcmaster.com/catalog/91251A"],
+    "source_explanation": "Extracted from product title and specifications table"
+  },
+  "bore_diameter": {
+    "value": "25 mm",
+    "sources": ["INPUT:product_title"],
+    "source_explanation": "Extracted from product title field"
+  },
+  "datasheet_url": {
+    "value": "https://example.com/spec.pdf",
+    "sources": ["PDF:spec.pdf:page_2"],
+    "source_explanation": "Extracted from specifications table on page 2"
+  }
+}
 ```
 
-Every field comes with its source URL so you know where the data came from.
+Set `"web_search": false` to skip web lookups and only process your input data.
+
+### Automatic Error Flagging
+
+AI flags uncertain values, conflicting data, and potential issues for human review. Every result includes reasoning and confidence indicators.
+
+```json
+{
+  "review_info": {
+    "reasoning": "Found conflicting specs across sources",
+    "confidence": "medium",
+    "flags": ["conflicting_data", "verify_dimensions"]
+  }
+}
+```
+
+### Taxonomy & Category Prediction
+
+Automatically classify items into your taxonomy with attribute extraction. Define your category hierarchy once—Rastro assigns items and extracts category-specific attributes.
+
+```json
+{
+  "category_path": "Fasteners > Bolts > Hex Bolts",
+  "taxonomy_attributes": {
+    "Thread Size": "M10-1.5",
+    "Head Type": "Hex",
+    "Grade": "A2-70"
+  }
+}
+```
+
+### Complex Field Types
+
+Define fields with units, enums, arrays, and validation constraints. Rastro extracts structured data matching your exact schema.
+
+```json
+{
+  "output_schema": [
+    {"name": "weight", "type": "number", "unit": "kg"},
+    {"name": "material", "type": "string", "enum": ["Steel", "Aluminum", "Brass"]},
+    {"name": "certifications", "type": "array", "items_enum": ["ISO 9001", "CE", "UL"]}
+  ]
+}
+```
+
+### Quality Scoring
+
+Get a 1-5 readiness score for each item based on your criteria. Identify incomplete records before they hit production.
+
+```json
+{
+  "quality_score": 4,
+  "quality_result": {
+    "explanation": "Complete specs, missing datasheet URL",
+    "issues": ["No datasheet link"],
+    "suggestions": ["Add manufacturer datasheet"]
+  }
+}
+```
+
+---
+
+<CardGroup cols={3}>
+  <Card title="Enrich API" icon="sparkles" href="/enrich/quickstart">
+    Web research with citations
+  </Card>
+  <Card title="Flows" icon="diagram-project" href="/flows/quickstart">
+    Visual data pipelines
+  </Card>
+  <Card title="Catalogs" icon="database" href="/catalogs/quickstart">
+    Managed product storage
+  </Card>
+</CardGroup>
