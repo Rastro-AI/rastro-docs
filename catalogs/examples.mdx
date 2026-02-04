@@ -17,7 +17,17 @@ headers = {"Authorization": f"Bearer {API_KEY}"}
 catalog = requests.post(
     f"{BASE_URL}/public/catalogs",
     headers=headers,
-    json={"name": "My Products", "unique_id_field": "sku"}
+    json={
+        "name": "My Products",
+        "unique_id_field": "sku",
+        "schema_definition": {
+            "fields": [
+                {"name": "sku", "type": "string"},
+                {"name": "name", "type": "string"},
+                {"name": "price", "type": "number"}
+            ]
+        }
+    }
 ).json()
 
 catalog_id = catalog["id"]
@@ -154,11 +164,15 @@ class CatalogClient:
         )
         return response.json()["catalogs"]
 
-    def create_catalog(self, name, unique_field):
+    def create_catalog(self, name, unique_field, schema_fields):
         response = requests.post(
             f"{self.base_url}/public/catalogs",
             headers=self._headers(),
-            json={"name": name, "unique_id_field": unique_field}
+            json={
+                "name": name,
+                "unique_id_field": unique_field,
+                "schema_definition": {"fields": schema_fields}
+            }
         )
         return response.json()
 
@@ -236,7 +250,11 @@ class CatalogClient:
 client = CatalogClient("YOUR_API_KEY")
 
 # Create catalog and add items
-catalog = client.create_catalog("Bearings", "sku")
+catalog = client.create_catalog(
+    "Bearings",
+    "sku",
+    [{"name": "sku", "type": "string"}, {"name": "name", "type": "string"}]
+)
 catalog_id = catalog["id"]
 
 items = [
@@ -294,11 +312,15 @@ class CatalogClient {
     return data.catalogs;
   }
 
-  async createCatalog(name: string, uniqueField: string) {
+  async createCatalog(name: string, uniqueField: string, schemaFields: object[]) {
     const response = await fetch(`${BASE_URL}/public/catalogs`, {
       method: "POST",
       headers: this.headers(),
-      body: JSON.stringify({ name, unique_id_field: uniqueField })
+      body: JSON.stringify({
+        name,
+        unique_id_field: uniqueField,
+        schema_definition: { fields: schemaFields }
+      })
     });
     return response.json();
   }
@@ -392,7 +414,11 @@ class CatalogClient {
 const client = new CatalogClient("YOUR_API_KEY");
 
 // Create catalog and add items
-const catalog = await client.createCatalog("Bearings", "sku");
+const catalog = await client.createCatalog(
+  "Bearings",
+  "sku",
+  [{ name: "sku", type: "string" }, { name: "name", type: "string" }]
+);
 
 const items = [
   { sku: "6205-2RS", name: "Deep Groove Ball Bearing" },

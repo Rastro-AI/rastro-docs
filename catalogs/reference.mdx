@@ -48,7 +48,17 @@ Create a new catalog.
 response = requests.post(
     "https://catalogapi.rastro.ai/api/public/catalogs",
     headers={"Authorization": "Bearer YOUR_API_KEY"},
-    json={"name": "Products", "unique_id_field": "sku"}
+    json={
+        "name": "Products",
+        "unique_id_field": "sku",
+        "schema_definition": {
+            "fields": [
+                {"name": "sku", "type": "string"},
+                {"name": "title", "type": "string"},
+                {"name": "price", "type": "number"}
+            ]
+        }
+    }
 )
 ```
 
@@ -56,7 +66,16 @@ response = requests.post(
 curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"name": "Products", "unique_id_field": "sku"}'
+  -d '{
+    "name": "Products",
+    "unique_id_field": "sku",
+    "schema_definition": {
+      "fields": [
+        {"name": "sku", "type": "string"},
+        {"name": "title", "type": "string"}
+      ]
+    }
+  }'
 ```
 
 </CodeGroup>
@@ -67,6 +86,7 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs" \
 |-----------|------|----------|-------------|
 | `name` | string | Yes | Catalog name |
 | `unique_id_field` | string | Yes | Field used to identify items (e.g., `sku`) |
+| `schema_definition` | object | Yes | Schema with `fields` array defining field names and types |
 
 **Response:**
 
