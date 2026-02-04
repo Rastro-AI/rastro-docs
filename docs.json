@@ -10,7 +10,14 @@
   "colors": {
     "primary": "#F59E0B",
     "light": "#FBBF24",
-    "dark": "#D97706"
+    "dark": "#D97706",
+    "background": {
+      "light": "#FFFBF5",
+      "dark": "#0D0D0D"
+    }
+  },
+  "background": {
+    "decoration": "gradient"
   },
   "topbarCtaButton": {
     "name": "Dashboard",
@@ -40,6 +47,6 @@
     "baseUrl": "https://catalogapi.rastro.ai/api"
   },
   "contextual": {
-    "options": ["copy", "chatgpt", "claude"]
+    "options": ["copy", "view", "chatgpt", "claude"]
   }
 }
