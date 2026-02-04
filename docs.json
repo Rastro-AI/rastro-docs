@@ -40,6 +40,10 @@
       {
         "group": "Catalogs",
         "pages": ["catalogs/quickstart", "catalogs/reference", "catalogs/examples"]
+      },
+      {
+        "group": "Enterprise",
+        "pages": ["integrations"]
       }
     ]
   },
