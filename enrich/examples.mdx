@@ -45,6 +45,51 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
 
 ---
 
+## Reuse Configuration with Catalog ID
+
+Use `catalog_id` to automatically apply a catalog's schema, taxonomy, and settings without repeating them in every request.
+
+```python
+# First, create a catalog with your schema and settings
+catalog = requests.post(
+    "https://catalogapi.rastro.ai/api/public/catalogs",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "name": "Bearings Catalog",
+        "unique_id_field": "part_number",
+        "schema_definition": {
+            "fields": [
+                {"name": "part_number", "type": "string"},
+                {"name": "bore_diameter", "type": "string", "description": "Inner diameter in mm"},
+                {"name": "outer_diameter", "type": "string", "description": "Outer diameter in mm"},
+                {"name": "manufacturer", "type": "string", "description": "Brand name"}
+            ]
+        }
+    }
+).json()
+
+catalog_id = catalog["id"]
+
+# Now enrich using just the catalog_id - no need to repeat output_schema
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/enrich",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "catalog_id": catalog_id,
+        "items": [
+            {"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"},
+            {"part_number": "6206-2RS", "name": "Deep Groove Ball Bearing"}
+        ],
+        "speed": "slow"
+    }
+)
+print(response.json())
+```
+
+The catalog's `schema_definition` fields are automatically used as the `output_schema`. Any taxonomy or quality settings configured on the catalog are also applied.
+
+---
+
 ## Multiple Items
 
 Items are processed concurrently for speed.
