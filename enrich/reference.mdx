@@ -87,6 +87,7 @@ const response = await fetch("https://catalogapi.rastro.ai/api/public/enrich", {
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
+| `catalog_id` | string | - | Catalog ID from the dashboard — automatically applies its schema, taxonomy, and settings |
 | `async_mode` | boolean | `false` | Return immediately with `job_id` |
 | `max_rows` | integer | - | Process only first N items (dry run) |
 | `source_activity_id` | string | - | Resume from previous job to process remaining items |
@@ -255,8 +256,7 @@ const response = await fetch(
           "bore_diameter": ["https://skf.com/products/bearings/6205-2RS"]
         }
       },
-      "all_sources": ["https://skf.com/products/bearings/6205-2RS"],
-      "staged_change_id": "sc-abc123"
+      "all_sources": ["https://skf.com/products/bearings/6205-2RS"]
     }
   ],
   "total_items": 500,

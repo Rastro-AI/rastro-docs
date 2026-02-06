@@ -53,14 +53,14 @@ Set `"web_search": false` to skip web lookups and only process your input data. 
 
 ### Automatic Error Flagging
 
-AI flags uncertain values, conflicting data, and potential issues for human review. Every result includes reasoning and confidence indicators.
+AI flags uncertain values, conflicting data, and potential issues for human review. Every result includes reasoning and flags.
 
 ```json
 {
   "review_info": {
     "reasoning": "Found conflicting specs across sources",
-    "confidence": "medium",
-    "flags": ["conflicting_data", "verify_dimensions"]
+    "flags": ["conflicting_data", "verify_dimensions"],
+    "flag_record": true
   }
 }
 ```
