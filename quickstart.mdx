@@ -79,26 +79,28 @@ Use `"speed": "fast"` for quick testing (~1 min). For production, use `"slow"` f
   "job_id": "abc123-...",
   "results": [{
     "original_data": {"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"},
-    "enriched_fields": {
-      "bore_diameter": {
-        "value": "25 mm",
-        "sources": ["https://skf.com/products/bearings/6205-2RS"]
-      },
-      "outer_diameter": {
-        "value": "52 mm",
-        "sources": ["https://skf.com/products/bearings/6205-2RS"]
-      },
-      "manufacturer": {
-        "value": "SKF",
-        "sources": ["https://skf.com/products/bearings/6205-2RS"]
+    "after_data": {
+      "part_number": "6205-2RS",
+      "name": "Deep Groove Ball Bearing",
+      "bore_diameter": "25 mm",
+      "outer_diameter": "52 mm",
+      "manufacturer": "SKF",
+      "sources": {
+        "bore_diameter": ["https://skf.com/products/bearings/6205-2RS"],
+        "outer_diameter": ["https://skf.com/products/bearings/6205-2RS"],
+        "manufacturer": ["https://skf.com/products/bearings/6205-2RS"]
       }
-    }
+    },
+    "all_sources": ["https://skf.com/products/bearings/6205-2RS"]
   }],
+  "total_items": 1,
+  "successful": 1,
+  "credits_used": 1,
   "status": "completed"
 }
 ```
 
-Every field includes source URLs so you can verify the data.
+Each result includes `all_sources` — the URLs used to find the data.
 
 ---
 

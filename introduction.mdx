@@ -30,25 +30,26 @@ Every enriched value includes sources showing where data was found, plus optiona
 
 ```json
 {
-  "material": {
-    "value": "316 Stainless Steel",
-    "sources": ["https://mcmaster.com/catalog/91251A"],
-    "source_explanation": "Extracted from product title and specifications table"
+  "after_data": {
+    "material": "316 Stainless Steel",
+    "bore_diameter": "25 mm",
+    "datasheet_url": "https://example.com/spec.pdf",
+    "sources": {
+      "material": ["https://mcmaster.com/catalog/91251A"],
+      "bore_diameter": ["https://mcmaster.com/catalog/91251A"],
+      "datasheet_url": ["https://mcmaster.com/catalog/91251A"]
+    },
+    "source_explanations": {
+      "material": "Extracted from product title and specifications table",
+      "bore_diameter": "Extracted from product dimensions section",
+      "datasheet_url": "Extracted from specifications table on page 2"
+    }
   },
-  "bore_diameter": {
-    "value": "25 mm",
-    "sources": ["INPUT:product_title"],
-    "source_explanation": "Extracted from product title field"
-  },
-  "datasheet_url": {
-    "value": "https://example.com/spec.pdf",
-    "sources": ["PDF:spec.pdf:page_2"],
-    "source_explanation": "Extracted from specifications table on page 2"
-  }
+  "all_sources": ["https://mcmaster.com/catalog/91251A"]
 }
 ```
 
-Set `"web_search": false` to skip web lookups and only process your input data.
+Set `"web_search": false` to skip web lookups and only process your input data. Sources will reference `INPUT_DATA` instead of URLs.
 
 ### Automatic Error Flagging
 
