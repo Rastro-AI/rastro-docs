@@ -188,7 +188,7 @@ response = requests.post(
 
 ## Async Mode
 
-For large batches, get a job ID immediately and poll for results.
+For large batches, get a job ID immediately and poll for results. Results are available **progressively** — you can access completed items while the job is still running.
 
 ```python
 import requests
@@ -206,7 +206,7 @@ response = requests.post(
             {"part_number": "6205-2RS"},
             {"part_number": "6206-2RS"},
             {"part_number": "6207-2RS"},
-            # ... more items
+            # ... hundreds more items
         ],
         "output_schema": [
             {"name": "bore_diameter", "type": "string", "description": "Inner diameter"}
@@ -218,23 +218,37 @@ response = requests.post(
 job_id = response.json()["job_id"]
 print(f"Job started: {job_id}")
 
-# Poll for results
+# Poll for results — partial results are available while running
 while True:
     status = requests.get(
         f"{BASE_URL}/public/enrich/{job_id}",
-        headers={"Authorization": f"Bearer {API_KEY}"}
+        headers={"Authorization": f"Bearer {API_KEY}"},
+        params={"page": 1, "page_size": 50}
     ).json()
+
+    print(f"Status: {status['status']} — "
+          f"{status.get('completed_items', 0)}/{status['total_items']} items ready")
 
     if status["status"] != "running":
         break
-    print(f"Running... {status.get('successful', 0)} items complete")
     time.sleep(5)
 
-print(f"Completed: {status['successful']} items enriched")
-for item in status["results"]:
-    print(f"  {item['original_data']}")
-    for field, data in item["enriched_fields"].items():
-        print(f"    {field}: {data['value']}")
+# Paginate through all results
+all_results = []
+page = 1
+while True:
+    resp = requests.get(
+        f"{BASE_URL}/public/enrich/{job_id}",
+        headers={"Authorization": f"Bearer {API_KEY}"},
+        params={"page": page, "page_size": 100}
+    ).json()
+
+    all_results.extend(resp["results"])
+    if page >= resp["total_pages"]:
+        break
+    page += 1
+
+print(f"Fetched {len(all_results)} results, {resp['credits_used']} credits used")
 ```
 
 ---
@@ -378,24 +392,48 @@ class RastroClient:
         )
         return response.json()
 
+    def poll(self, job_id, page=1, page_size=1000):
+        """Poll job status. Returns partial results while running."""
+        return requests.get(
+            f"{self.base_url}/public/enrich/{job_id}",
+            headers=self._headers(),
+            params={"page": page, "page_size": page_size}
+        ).json()
+
+    def get_all_results(self, job_id, page_size=100):
+        """Paginate through all available results."""
+        all_results = []
+        page = 1
+        while True:
+            resp = self.poll(job_id, page=page, page_size=page_size)
+            all_results.extend(resp["results"])
+            if page >= resp.get("total_pages", 1):
+                break
+            page += 1
+        return all_results, resp
+
     def enrich_async(self, items, output_schema, speed="slow", poll_interval=5, **kwargs):
         # Start job
         result = self.enrich(items, output_schema, speed, async_mode=True, **kwargs)
         job_id = result["job_id"]
         print(f"Started job: {job_id}")
 
-        # Poll until complete
+        # Poll until complete — partial results available while running
         while True:
-            status = requests.get(
-                f"{self.base_url}/public/enrich/{job_id}",
-                headers=self._headers()
-            ).json()
+            status = self.poll(job_id, page_size=1)
+            completed = status.get("completed_items", 0)
+            total = status.get("total_items", "?")
 
             if status["status"] != "running":
-                return status
+                break
 
-            print(f"Progress: {status.get('successful', 0)}/{status.get('total_items', '?')}")
+            print(f"Progress: {completed}/{total} items ready")
             time.sleep(poll_interval)
+
+        # Fetch all results with pagination
+        all_results, final = self.get_all_results(job_id)
+        final["results"] = all_results
+        return final
 
 
 # Example usage
@@ -463,6 +501,27 @@ async function enrich(
   return response.json();
 }
 
+async function poll(jobId: string, page = 1, pageSize = 1000) {
+  const response = await fetch(
+    `${BASE_URL}/public/enrich/${jobId}?page=${page}&page_size=${pageSize}`,
+    { headers: { "Authorization": `Bearer ${API_KEY}` } }
+  );
+  return response.json();
+}
+
+async function getAllResults(jobId: string, pageSize = 100) {
+  const allResults: any[] = [];
+  let page = 1;
+  let lastResp: any;
+  while (true) {
+    lastResp = await poll(jobId, page, pageSize);
+    allResults.push(...lastResp.results);
+    if (page >= (lastResp.total_pages || 1)) break;
+    page++;
+  }
+  return { results: allResults, ...lastResp };
+}
+
 async function enrichAsync(
   items: object[],
   outputSchema: OutputField[],
@@ -473,19 +532,18 @@ async function enrichAsync(
   const jobId = result.job_id;
   console.log(`Started job: ${jobId}`);
 
+  // Poll until complete — partial results available while running
   while (true) {
-    const response = await fetch(`${BASE_URL}/public/enrich/${jobId}`, {
-      headers: { "Authorization": `Bearer ${API_KEY}` }
-    });
-    const status = await response.json();
+    const status = await poll(jobId, 1, 1);
 
-    if (status.status !== "running") {
-      return status;
-    }
+    if (status.status !== "running") break;
 
-    console.log(`Progress: ${status.successful || 0}/${status.total_items || "?"}`);
+    console.log(`Progress: ${status.completed_items || 0}/${status.total_items || "?"} items ready`);
     await new Promise(r => setTimeout(r, pollInterval));
   }
+
+  // Fetch all results with pagination
+  return getAllResults(jobId);
 }
 
 // Example usage

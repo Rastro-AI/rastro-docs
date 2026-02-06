@@ -148,11 +148,11 @@ Define fields to extract. Each field needs a `name`, `type`, and `description`.
 |-------|------|-------------|
 | `job_id` | string | Job ID for tracking |
 | `results` | array | Enriched items (empty if `async_mode=true`) |
-| `total_items` | integer | Items processed |
+| `total_items` | integer | Total items submitted |
 | `total_rows` | integer | Total items before `max_rows` limit |
 | `successful` | integer | Successfully enriched items |
 | `credits_used` | integer | Credits used (1 per item) |
-| `status` | string | `"running"` or `"completed"` |
+| `status` | string | `"running"`, `"pending_review"`, `"completed"`, or `"failed"` |
 
 ### Result Item Fields
 
@@ -173,40 +173,114 @@ Define fields to extract. Each field needs a `name`, `type`, and `description`.
 
 ## GET /public/enrich/{job_id}
 
-Poll enrichment job status and retrieve results.
+Poll enrichment job status and retrieve results. Results are returned **progressively** — partial results are available while the job is still running, as each batch of items completes processing.
+
+### Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | integer | `1` | Page number (1-indexed) |
+| `page_size` | integer | `1000` | Results per page |
 
 <CodeGroup>
 
 ```python Python
+# Basic poll
 response = requests.get(
     f"https://catalogapi.rastro.ai/api/public/enrich/{job_id}",
     headers={"Authorization": "Bearer YOUR_API_KEY"}
 )
-print(response.json())
+
+# With pagination
+response = requests.get(
+    f"https://catalogapi.rastro.ai/api/public/enrich/{job_id}",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    params={"page": 1, "page_size": 50}
+)
 ```
 
 ```bash cURL
+# Basic poll
 curl "https://catalogapi.rastro.ai/api/public/enrich/{job_id}" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+
+# With pagination
+curl "https://catalogapi.rastro.ai/api/public/enrich/{job_id}?page=1&page_size=50" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 ```typescript TypeScript
+// Basic poll
 const response = await fetch(`https://catalogapi.rastro.ai/api/public/enrich/${jobId}`, {
   headers: { "Authorization": "Bearer YOUR_API_KEY" }
 });
-console.log(await response.json());
+
+// With pagination
+const response = await fetch(
+  `https://catalogapi.rastro.ai/api/public/enrich/${jobId}?page=1&page_size=50`,
+  { headers: { "Authorization": "Bearer YOUR_API_KEY" } }
+);
 ```
 
 </CodeGroup>
 
+### Poll Response
+
+```json
+{
+  "job_id": "abc123-def456-...",
+  "status": "running",
+  "results": [
+    {
+      "original_data": {"part_number": "6205-2RS"},
+      "enriched_fields": {
+        "bore_diameter": {"value": "25 mm", "sources": ["https://skf.com/..."]}
+      },
+      "staged_change_id": "sc-abc123"
+    }
+  ],
+  "total_items": 500,
+  "completed_items": 200,
+  "successful": 0,
+  "credits_used": 0,
+  "page": 1,
+  "page_size": 50,
+  "total_pages": 4
+}
+```
+
+### Poll Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `job_id` | string | Job ID |
+| `status` | string | Current status (see below) |
+| `results` | array | Enriched items for the current page |
+| `total_items` | integer | Total items submitted |
+| `completed_items` | integer | Items with results available so far (grows while `running`) |
+| `successful` | integer | Finalized success count (set when job finishes) |
+| `credits_used` | integer | Credits charged (`0` while `running`) |
+| `page` | integer | Current page number |
+| `page_size` | integer | Results per page |
+| `total_pages` | integer | Total pages based on `completed_items` |
+| `service_usage` | object | Cost details (only present when job finishes) |
+
+<Note>
+While `status` is `running`, `completed_items` reflects how many items have finished so far. Use `completed_items` and `total_items` to show progress. `credits_used` remains `0` until the job finishes.
+</Note>
+
 ### Status Values
 
-| Status | Description |
-|--------|-------------|
-| `running` | Job is processing |
-| `completed` | Job finished successfully |
-| `pending_review` | Results staged for review |
-| `failed` | Job failed |
+| Status | Description | Results available? |
+|--------|-------------|-------------------|
+| `running` | Job is still processing | Yes — partial results from completed batches |
+| `pending_review` | All results ready, staged for review | Yes — all results |
+| `completed` | Job finished successfully | Yes — all results |
+| `failed` | Job failed or was cancelled | Yes — partial results from completed batches |
+
+<Note>
+Cancelled jobs are reported as `failed` with `stopped_early: true` in `service_usage`. Partial results and credits for completed items are preserved.
+</Note>
 
 ---
 
