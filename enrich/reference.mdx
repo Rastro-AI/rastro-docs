@@ -152,7 +152,7 @@ Define fields to extract. Each field needs a `name`, `type`, and `description`.
 | `total_rows` | integer | Total items before `max_rows` limit |
 | `successful` | integer | Successfully enriched items |
 | `credits_used` | integer | Credits used (1 per item) |
-| `status` | string | `"running"`, `"pending_review"`, `"completed"`, or `"failed"` |
+| `status` | string | `"running"`, `"completed"`, or `"failed"` |
 
 ### Result Item Fields
 
@@ -274,12 +274,11 @@ While `status` is `running`, `completed_items` reflects how many items have fini
 | Status | Description | Results available? |
 |--------|-------------|-------------------|
 | `running` | Job is still processing | Yes — partial results from completed batches |
-| `pending_review` | All results ready, staged for review | Yes — all results |
-| `completed` | Job finished successfully | Yes — all results |
+| `completed` | Job finished, all results ready | Yes — all results |
 | `failed` | Job failed or was cancelled | Yes — partial results from completed batches |
 
 <Note>
-Cancelled jobs are reported as `failed` with `stopped_early: true` in `service_usage`. Partial results and credits for completed items are preserved.
+Cancelled jobs are reported as `failed`. Partial results and credits for completed items are preserved.
 </Note>
 
 ---
