@@ -70,7 +70,7 @@ const response = await fetch("https://catalogapi.rastro.ai/api/public/enrich", {
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `speed` | string | `"medium"` | `"fast"` (~1 min), `"medium"` (~2 min), `"slow"` (10-15 min, most thorough) |
+| `speed` | string | `"medium"` | `"fast"` (~1 min), `"medium"` (~2 min), `"slow"` (10-15 min, most thorough), `"cheap"` (fastest, uses lighter model) |
 | `allowed_domains` | array | any | Restrict sources to these domains only |
 | `web_search` | boolean | `true` | Set `false` to skip web search and use input data directly |
 
@@ -119,6 +119,9 @@ Define fields to extract. Each field needs a `name`, `type`, and `description`.
 | `enum` | array | Constrain to specific values |
 | `sample_values` | array | Example values to guide extraction |
 | `array_element_type` | string | For arrays: `string`, `number`, `image_url` |
+| `items_enum` | array | For array-type fields, constrains array items to specific values |
+| `required` | boolean | Marks whether this field is required in the output |
+| `merge` | boolean | Merge enriched values with existing values instead of overwriting |
 
 ---
 
@@ -129,11 +132,21 @@ Define fields to extract. Each field needs a `name`, `type`, and `description`.
   "job_id": "abc123-def456-...",
   "results": [{
     "original_data": {"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"},
-    "enriched_fields": {
-      "bore_diameter": {"value": "25 mm", "sources": ["https://skf.com/..."]},
-      "outer_diameter": {"value": "52 mm", "sources": ["https://skf.com/..."]}
+    "after_data": {
+      "part_number": "6205-2RS",
+      "name": "Deep Groove Ball Bearing",
+      "bore_diameter": "25 mm",
+      "outer_diameter": "52 mm",
+      "sources": {
+        "bore_diameter": ["https://skf.com/products/bearings/6205-2RS"],
+        "outer_diameter": ["https://skf.com/products/bearings/6205-2RS"]
+      },
+      "source_explanations": {
+        "bore_diameter": "Found on manufacturer product page",
+        "outer_diameter": "Found on manufacturer product page"
+      }
     },
-    "all_sources": ["https://skf.com/..."]
+    "all_sources": ["https://skf.com/products/bearings/6205-2RS"]
   }],
   "total_items": 1,
   "successful": 1,
@@ -159,15 +172,16 @@ Define fields to extract. Each field needs a `name`, `type`, and `description`.
 | Field | Type | Description |
 |-------|------|-------------|
 | `original_data` | object | Input data |
-| `enriched_fields` | object | `{field: {value, sources[]}}` |
-| `all_sources` | array | All URLs scraped |
+| `after_data` | object | Complete enriched record. Contains original fields, enriched values, `sources` (per-field URL citations), and `source_explanations` (per-field derivation explanations) |
+| `all_sources` | array | Deduplicated list of all URLs used across all fields |
 | `error` | string | Error message if failed |
 | `category_id` | string | Predicted category (if taxonomy enabled) |
 | `category_path` | string | Full path like `"Bearings > Ball Bearings"` |
 | `taxonomy_attributes` | object | Category-specific attributes |
 | `quality_score` | integer | 1-5 score (if `quality_prompt` set) |
 | `quality_result` | object | `{score, explanation, issues, suggestions}` |
-| `review_info` | object | AI reasoning and flags |
+| `taxonomy_attribute_explanations` | object | Per-attribute explanations of how taxonomy values were derived |
+| `review_info` | object | AI reasoning and flags (see below) |
 
 ---
 
@@ -233,9 +247,14 @@ const response = await fetch(
   "results": [
     {
       "original_data": {"part_number": "6205-2RS"},
-      "enriched_fields": {
-        "bore_diameter": {"value": "25 mm", "sources": ["https://skf.com/..."]}
+      "after_data": {
+        "part_number": "6205-2RS",
+        "bore_diameter": "25 mm",
+        "sources": {
+          "bore_diameter": ["https://skf.com/products/bearings/6205-2RS"]
+        }
       },
+      "all_sources": ["https://skf.com/products/bearings/6205-2RS"],
       "staged_change_id": "sc-abc123"
     }
   ],
@@ -285,29 +304,18 @@ Cancelled jobs are reported as `failed`. Partial results and credits for complet
 
 ## Source Citations
 
-Every field includes URLs showing where data was found.
+Each result includes `all_sources` — the URLs used during enrichment.
 
 ```json
 {
-  "enriched_fields": {
-    "bore_diameter": {
-      "value": "25 mm",
-      "sources": ["https://skf.com/products/bearings/6205-2RS"]
-    }
-  }
+  "all_sources": [
+    "https://skf.com/products/bearings/6205-2RS",
+    "https://mcmaster.com/6205-2RS"
+  ]
 }
 ```
 
-When a value comes from input data, the source shows `INPUT:field_name`:
-
-```json
-{
-  "part_number": {
-    "value": "6205-2RS",
-    "sources": ["INPUT:part_number"]
-  }
-}
-```
+When `web_search` is `false`, the AI uses only the input data (`INPUT_DATA`) to derive field values.
 
 ---
 
@@ -319,8 +327,18 @@ Every result includes `review_info` with AI reasoning:
 {
   "review_info": {
     "reasoning": "Found specs on manufacturer website, cross-referenced with distributor",
-    "confidence": "high",
-    "flags": ["verify_tolerance_class"]
+    "flags": ["verify_tolerance_class"],
+    "field_issues": [
+      {"field": "tolerance", "severity": "warning", "message": "Value not found in sources"}
+    ],
+    "flag_record": true
   }
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `reasoning` | string | AI explanation of how values were extracted |
+| `flags` | array | General flags or warnings about the extraction |
+| `field_issues` | array | Per-field issues with `field`, `severity` (error/warning/info), `message`, and `validator` |
+| `flag_record` | boolean | Whether this record needs human attention |

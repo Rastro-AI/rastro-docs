@@ -13,25 +13,9 @@ BASE_URL = "https://catalogapi.rastro.ai/api"
 
 headers = {"Authorization": f"Bearer {API_KEY}"}
 
-# 1. Create a catalog
-catalog = requests.post(
-    f"{BASE_URL}/public/catalogs",
-    headers=headers,
-    json={
-        "name": "My Products",
-        "unique_id_field": "sku",
-        "schema_definition": {
-            "fields": [
-                {"name": "sku", "type": "string"},
-                {"name": "name", "type": "string"},
-                {"name": "price", "type": "number"}
-            ]
-        }
-    }
-).json()
-
-catalog_id = catalog["id"]
-print(f"Created catalog: {catalog_id}")
+# 1. Get your catalog ID from the dashboard or list catalogs
+catalogs = requests.get(f"{BASE_URL}/public/catalogs", headers=headers).json()
+catalog_id = catalogs["catalogs"][0]["id"]
 
 # 2. Add items
 items = [
@@ -80,6 +64,8 @@ print(f"Item: {item}")
 
 ## Catalog Enrichment with Polling
 
+Use `POST /public/enrich` with `catalog_id` to enrich catalog items. The catalog's schema is applied automatically.
+
 ```python
 import requests
 import time
@@ -89,14 +75,15 @@ BASE_URL = "https://catalogapi.rastro.ai/api"
 
 headers = {"Authorization": f"Bearer {API_KEY}"}
 
-def enrich_catalog(catalog_id, output_schema, speed="slow"):
-    # Start enrichment
+def enrich_catalog(catalog_id, items, speed="slow"):
+    # Start enrichment using the catalog's schema
     response = requests.post(
-        f"{BASE_URL}/public/catalogs/{catalog_id}/enrich",
+        f"{BASE_URL}/public/enrich",
         headers=headers,
         json={
-            "prompt": "Find product specifications from manufacturer websites",
-            "output_schema": output_schema,
+            "catalog_id": catalog_id,
+            "items": items,
+            "async_mode": True,
             "speed": speed
         }
     )
@@ -108,17 +95,16 @@ def enrich_catalog(catalog_id, output_schema, speed="slow"):
     # Poll for completion
     while True:
         status = requests.get(
-            f"{BASE_URL}/public/catalogs/{catalog_id}/enrich/{job_id}",
+            f"{BASE_URL}/public/enrich/{job_id}",
             headers=headers
         ).json()
 
         completed = status.get("completed_items", 0)
         total = status.get("total_items", 0)
-        failed = status.get("failed_items", 0)
 
-        print(f"Progress: {completed}/{total} ({failed} failed)")
+        print(f"Progress: {completed}/{total}")
 
-        if status["status"] in ["completed", "failed", "cancelled"]:
+        if status["status"] != "running":
             return status
 
         time.sleep(10)
@@ -127,17 +113,15 @@ def enrich_catalog(catalog_id, output_schema, speed="slow"):
 # Example usage
 catalog_id = "cat_abc123"
 
-schema = [
-    {"name": "bore_diameter", "type": "string", "description": "Inner diameter in mm"},
-    {"name": "outer_diameter", "type": "string", "description": "Outer diameter in mm"},
-    {"name": "width", "type": "string", "description": "Bearing width in mm"},
-    {"name": "manufacturer", "type": "string", "description": "Brand name"}
+items = [
+    {"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"},
+    {"part_number": "6206-2RS", "name": "Deep Groove Ball Bearing"},
+    {"part_number": "6207-2RS", "name": "Deep Groove Ball Bearing"}
 ]
 
-result = enrich_catalog(catalog_id, schema)
+result = enrich_catalog(catalog_id, items)
 print(f"\nEnrichment {result['status']}")
 print(f"Completed: {result['completed_items']}")
-print(f"Failed: {result['failed_items']}")
 ```
 
 ---
@@ -163,18 +147,6 @@ class CatalogClient:
             headers=self._headers()
         )
         return response.json()["catalogs"]
-
-    def create_catalog(self, name, unique_field, schema_fields):
-        response = requests.post(
-            f"{self.base_url}/public/catalogs",
-            headers=self._headers(),
-            json={
-                "name": name,
-                "unique_id_field": unique_field,
-                "schema_definition": {"fields": schema_fields}
-            }
-        )
-        return response.json()
 
     # Item operations
     def list_items(self, catalog_id, page=1, limit=100):
@@ -208,39 +180,32 @@ class CatalogClient:
         )
         return response.json()
 
-    # Enrichment operations
-    def start_enrichment(self, catalog_id, output_schema, **kwargs):
+    # Enrichment (uses the Enrich API with catalog_id)
+    def start_enrichment(self, catalog_id, items, speed="slow", **kwargs):
         response = requests.post(
-            f"{self.base_url}/public/catalogs/{catalog_id}/enrich",
+            f"{self.base_url}/public/enrich",
             headers=self._headers(),
-            json={"output_schema": output_schema, **kwargs}
+            json={"catalog_id": catalog_id, "items": items, "async_mode": True, "speed": speed, **kwargs}
         )
         return response.json()
 
-    def get_enrichment_status(self, catalog_id, job_id):
+    def get_enrichment_status(self, job_id):
         response = requests.get(
-            f"{self.base_url}/public/catalogs/{catalog_id}/enrich/{job_id}",
+            f"{self.base_url}/public/enrich/{job_id}",
             headers=self._headers()
         )
         return response.json()
 
-    def cancel_enrichment(self, catalog_id, job_id):
-        response = requests.post(
-            f"{self.base_url}/public/catalogs/{catalog_id}/enrich/{job_id}/cancel",
-            headers=self._headers()
-        )
-        return response.json()
-
-    def enrich_and_wait(self, catalog_id, output_schema, poll_interval=10, **kwargs):
-        job = self.start_enrichment(catalog_id, output_schema, **kwargs)
+    def enrich_and_wait(self, catalog_id, items, poll_interval=10, **kwargs):
+        job = self.start_enrichment(catalog_id, items, **kwargs)
         job_id = job["job_id"]
         print(f"Started job: {job_id}")
 
         while True:
-            status = self.get_enrichment_status(catalog_id, job_id)
+            status = self.get_enrichment_status(job_id)
             print(f"Progress: {status.get('completed_items', 0)}/{status.get('total_items', '?')}")
 
-            if status["status"] in ["completed", "failed", "cancelled"]:
+            if status["status"] != "running":
                 return status
 
             time.sleep(poll_interval)
@@ -249,14 +214,11 @@ class CatalogClient:
 # Example usage
 client = CatalogClient("YOUR_API_KEY")
 
-# Create catalog and add items
-catalog = client.create_catalog(
-    "Bearings",
-    "sku",
-    [{"name": "sku", "type": "string"}, {"name": "name", "type": "string"}]
-)
-catalog_id = catalog["id"]
+# Get catalog ID from dashboard or list
+catalogs = client.list_catalogs()
+catalog_id = catalogs[0]["id"]
 
+# Add items
 items = [
     {"sku": "6205-2RS", "name": "Deep Groove Ball Bearing"},
     {"sku": "6206-2RS", "name": "Deep Groove Ball Bearing"},
@@ -267,17 +229,13 @@ client.bulk_upsert(catalog_id, items, "sku")
 # Enrich and wait
 result = client.enrich_and_wait(
     catalog_id,
-    output_schema=[
-        {"name": "bore_diameter", "type": "string", "description": "Inner diameter"},
-        {"name": "outer_diameter", "type": "string", "description": "Outer diameter"}
-    ],
-    prompt="Find bearing specifications",
+    items=items,
     speed="slow"
 )
 
 # List enriched items
-items = client.list_items(catalog_id)
-for item in items["items"]:
+catalog_items = client.list_items(catalog_id)
+for item in catalog_items["items"]:
     print(f"{item['sku']}: bore={item.get('bore_diameter', 'N/A')}")
 ```
 
@@ -310,19 +268,6 @@ class CatalogClient {
     });
     const data = await response.json();
     return data.catalogs;
-  }
-
-  async createCatalog(name: string, uniqueField: string, schemaFields: object[]) {
-    const response = await fetch(`${BASE_URL}/public/catalogs`, {
-      method: "POST",
-      headers: this.headers(),
-      body: JSON.stringify({
-        name,
-        unique_id_field: uniqueField,
-        schema_definition: { fields: schemaFields }
-      })
-    });
-    return response.json();
   }
 
   // Item operations
@@ -366,22 +311,22 @@ class CatalogClient {
     return response.json();
   }
 
-  // Enrichment operations
-  async startEnrichment(catalogId: string, outputSchema: object[], options: object = {}) {
+  // Enrichment (uses the Enrich API with catalog_id)
+  async startEnrichment(catalogId: string, items: object[], options: object = {}) {
     const response = await fetch(
-      `${BASE_URL}/public/catalogs/${catalogId}/enrich`,
+      `${BASE_URL}/public/enrich`,
       {
         method: "POST",
         headers: this.headers(),
-        body: JSON.stringify({ output_schema: outputSchema, ...options })
+        body: JSON.stringify({ catalog_id: catalogId, items, async_mode: true, ...options })
       }
     );
     return response.json();
   }
 
-  async getEnrichmentStatus(catalogId: string, jobId: string) {
+  async getEnrichmentStatus(jobId: string) {
     const response = await fetch(
-      `${BASE_URL}/public/catalogs/${catalogId}/enrich/${jobId}`,
+      `${BASE_URL}/public/enrich/${jobId}`,
       { headers: this.headers() }
     );
     return response.json();
@@ -389,19 +334,19 @@ class CatalogClient {
 
   async enrichAndWait(
     catalogId: string,
-    outputSchema: object[],
+    items: object[],
     options: object = {},
     pollInterval = 10000
   ) {
-    const job = await this.startEnrichment(catalogId, outputSchema, options);
+    const job = await this.startEnrichment(catalogId, items, options);
     const jobId = job.job_id;
     console.log(`Started job: ${jobId}`);
 
     while (true) {
-      const status = await this.getEnrichmentStatus(catalogId, jobId);
+      const status = await this.getEnrichmentStatus(jobId);
       console.log(`Progress: ${status.completed_items || 0}/${status.total_items || "?"}`);
 
-      if (["completed", "failed", "cancelled"].includes(status.status)) {
+      if (status.status !== "running") {
         return status;
       }
 
@@ -413,31 +358,26 @@ class CatalogClient {
 // Example usage
 const client = new CatalogClient("YOUR_API_KEY");
 
-// Create catalog and add items
-const catalog = await client.createCatalog(
-  "Bearings",
-  "sku",
-  [{ name: "sku", type: "string" }, { name: "name", type: "string" }]
-);
+// Get catalog ID from dashboard or list
+const catalogs = await client.listCatalogs();
+const catalogId = catalogs[0].id;
 
+// Add items
 const items = [
   { sku: "6205-2RS", name: "Deep Groove Ball Bearing" },
   { sku: "6206-2RS", name: "Deep Groove Ball Bearing" }
 ];
-await client.bulkUpsert(catalog.id, items, "sku");
+await client.bulkUpsert(catalogId, items, "sku");
 
 // Enrich and wait
 const result = await client.enrichAndWait(
-  catalog.id,
-  [
-    { name: "bore_diameter", type: "string", description: "Inner diameter" },
-    { name: "outer_diameter", type: "string", description: "Outer diameter" }
-  ],
-  { prompt: "Find bearing specifications", speed: "slow" }
+  catalogId,
+  items,
+  { speed: "slow" }
 );
 
 // List enriched items
-const enrichedItems = await client.listItems(catalog.id);
+const enrichedItems = await client.listItems(catalogId);
 for (const item of enrichedItems.items) {
   console.log(`${item.sku}: bore=${item.bore_diameter || "N/A"}`);
 }

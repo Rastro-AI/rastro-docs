@@ -50,27 +50,11 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
 Use `catalog_id` to automatically apply a catalog's schema, taxonomy, and settings without repeating them in every request.
 
 ```python
-# First, create a catalog with your schema and settings
-catalog = requests.post(
-    "https://catalogapi.rastro.ai/api/public/catalogs",
-    headers={"Authorization": "Bearer YOUR_API_KEY"},
-    json={
-        "name": "Bearings Catalog",
-        "unique_id_field": "part_number",
-        "schema_definition": {
-            "fields": [
-                {"name": "part_number", "type": "string"},
-                {"name": "bore_diameter", "type": "string", "description": "Inner diameter in mm"},
-                {"name": "outer_diameter", "type": "string", "description": "Outer diameter in mm"},
-                {"name": "manufacturer", "type": "string", "description": "Brand name"}
-            ]
-        }
-    }
-).json()
+# Create a catalog with schema and settings via the Rastro dashboard,
+# then use its catalog_id to enrich without repeating output_schema.
+catalog_id = "cat_abc123"  # From dashboard
 
-catalog_id = catalog["id"]
-
-# Now enrich using just the catalog_id - no need to repeat output_schema
+# Enrich using just the catalog_id - no need to repeat output_schema
 response = requests.post(
     "https://catalogapi.rastro.ai/api/public/enrich",
     headers={"Authorization": "Bearer YOUR_API_KEY"},
@@ -86,7 +70,7 @@ response = requests.post(
 print(response.json())
 ```
 
-The catalog's `schema_definition` fields are automatically used as the `output_schema`. Any taxonomy or quality settings configured on the catalog are also applied.
+The catalog's schema fields are automatically used as the `output_schema`. Any taxonomy or quality settings configured on the catalog are also applied. Catalogs are created through the [Rastro dashboard](https://dashboard.rastro.ai).
 
 ---
 
@@ -162,23 +146,23 @@ response = requests.post(
     }
 )
 
-# Response sources will show INPUT:raw_title, INPUT:description
+# Response sources will reference INPUT_DATA
 ```
 
 **Response:**
 
 ```json
 {
-  "enriched_fields": {
-    "manufacturer": {
-      "value": "SKF",
-      "sources": ["INPUT:raw_title"],
-      "source_explanation": "Extracted from product title field"
-    },
-    "bore_diameter": {
-      "value": "25mm",
-      "sources": ["INPUT:raw_title"],
-      "source_explanation": "Parsed from dimensions in title"
+  "after_data": {
+    "manufacturer": "SKF",
+    "bore_diameter": "25mm",
+    "outer_diameter": "52mm",
+    "width": "15mm",
+    "sources": {
+      "manufacturer": ["INPUT_DATA"],
+      "bore_diameter": ["INPUT_DATA"],
+      "outer_diameter": ["INPUT_DATA"],
+      "width": ["INPUT_DATA"]
     }
   }
 }
@@ -291,7 +275,7 @@ response = requests.post(
 ```json
 {
   "category_id": "ball_bearings",
-  "category_path": "Bearings > Ball Bearings",
+  "category_path": "Ball Bearings",
   "taxonomy_attributes": {
     "Bore Size": "25 mm",
     "Seal Type": "2RS (rubber seal)"
@@ -324,6 +308,14 @@ response = requests.post(
 
 ```json
 {
+  "after_data": {
+    "bore_diameter": "25 mm",
+    "load_rating": "14.8 kN",
+    "sources": {
+      "bore_diameter": ["https://skf.com/products/bearings/6205-2RS"],
+      "load_rating": ["https://skf.com/products/bearings/6205-2RS"]
+    }
+  },
   "quality_score": 4,
   "quality_result": {
     "score": 4,
@@ -449,10 +441,15 @@ result = client.enrich(
 )
 
 for item in result["results"]:
+    data = item["after_data"]
+    sources = data.get("sources", {})
     print(f"\n{item['original_data']}:")
-    for field, data in item["enriched_fields"].items():
-        print(f"  {field}: {data['value']}")
-        print(f"    Source: {data['sources'][0] if data['sources'] else 'N/A'}")
+    for field, value in data.items():
+        if field in ("sources", "source_explanations"):
+            continue
+        print(f"  {field}: {value}")
+        if field in sources:
+            print(f"    Sources: {sources[field]}")
 ```
 
 ---
@@ -472,7 +469,7 @@ interface OutputField {
 }
 
 interface EnrichOptions {
-  speed?: "fast" | "medium" | "slow";
+  speed?: "fast" | "medium" | "slow" | "cheap";
   async_mode?: boolean;
   allowed_domains?: string[];
   web_search?: boolean;
@@ -557,9 +554,13 @@ const result = await enrich(
 );
 
 for (const item of result.results) {
+  const { sources, source_explanations, ...fields } = item.after_data;
   console.log(`\n${JSON.stringify(item.original_data)}:`);
-  for (const [field, data] of Object.entries(item.enriched_fields)) {
-    console.log(`  ${field}: ${(data as any).value}`);
+  for (const [field, value] of Object.entries(fields)) {
+    console.log(`  ${field}: ${value}`);
+    if (sources?.[field]) {
+      console.log(`    Sources: ${sources[field].join(", ")}`);
+    }
   }
 }
 ```

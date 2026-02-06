@@ -38,65 +38,9 @@ curl "https://catalogapi.rastro.ai/api/public/catalogs" \
 
 ---
 
-### POST /public/catalogs
-
-Create a new catalog.
-
-<CodeGroup>
-
-```python Python
-response = requests.post(
-    "https://catalogapi.rastro.ai/api/public/catalogs",
-    headers={"Authorization": "Bearer YOUR_API_KEY"},
-    json={
-        "name": "Products",
-        "unique_id_field": "sku",
-        "schema_definition": {
-            "fields": [
-                {"name": "sku", "type": "string"},
-                {"name": "title", "type": "string"},
-                {"name": "price", "type": "number"}
-            ]
-        }
-    }
-)
-```
-
-```bash cURL
-curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Products",
-    "unique_id_field": "sku",
-    "schema_definition": {
-      "fields": [
-        {"name": "sku", "type": "string"},
-        {"name": "title", "type": "string"}
-      ]
-    }
-  }'
-```
-
-</CodeGroup>
-
-**Request Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `name` | string | Yes | Catalog name |
-| `unique_id_field` | string | Yes | Field used to identify items (e.g., `sku`) |
-| `schema_definition` | object | Yes | Schema with `fields` array defining field names and types |
-
-**Response:**
-
-```json
-{
-  "id": "cat_123",
-  "name": "Products",
-  "unique_id_field": "sku"
-}
-```
+<Note>
+Catalogs are created through the [Rastro dashboard](https://dashboard.rastro.ai). The public API supports listing, reading, and managing items within existing catalogs.
+</Note>
 
 ---
 
@@ -260,155 +204,22 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/item
 
 ---
 
-## Catalog Enrichment
+## Enriching Catalog Items
 
-### POST /public/catalogs/{catalog_id}/enrich
+To enrich items in a catalog, use the [Enrich API](/enrich/reference) with the `catalog_id` parameter. The catalog's schema and taxonomy are automatically applied.
 
-Start an enrichment job for all items in a catalog.
-
-<CodeGroup>
-
-```python Python
+```python
 response = requests.post(
-    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich",
+    "https://catalogapi.rastro.ai/api/public/enrich",
     headers={"Authorization": "Bearer YOUR_API_KEY"},
     json={
-        "prompt": "Find product specifications",
-        "output_schema": [
-            {"name": "price", "type": "string", "description": "Current retail price"},
-            {"name": "weight", "type": "string", "description": "Product weight"}
+        "catalog_id": "cat_abc123",
+        "items": [
+            {"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"}
         ],
         "speed": "slow"
     }
 )
 ```
 
-```bash cURL
-curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Find product specifications",
-    "output_schema": [
-      {"name": "price", "type": "string", "description": "Current retail price"},
-      {"name": "weight", "type": "string", "description": "Product weight"}
-    ],
-    "speed": "slow"
-  }'
-```
-
-</CodeGroup>
-
-**Request Parameters:**
-
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `prompt` | Yes | - | Search prompt for web enrichment |
-| `output_schema` | Yes | - | Fields to extract: `[{name, type, description}]` |
-| `allowed_domains` | No | any | Restrict sources to these domains |
-| `speed` | No | `"medium"` | `"fast"`, `"medium"`, or `"slow"` |
-| `web_search` | No | `true` | Set `false` to skip web search |
-| `taxonomy` | No | - | Taxonomy for category prediction |
-| `predict_taxonomy` | No | `false` | Predict category for each item |
-| `quality_prompt` | No | - | Prompt for quality scoring |
-
-**Response:**
-
-```json
-{
-  "job_id": "job_abc123",
-  "status": "running",
-  "total_items": 150
-}
-```
-
----
-
-### GET /public/catalogs/{catalog_id}/enrich/{job_id}
-
-Poll the status of a catalog enrichment job.
-
-<CodeGroup>
-
-```python Python
-response = requests.get(
-    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}",
-    headers={"Authorization": "Bearer YOUR_API_KEY"}
-)
-```
-
-```bash cURL
-curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}" \
-  -H "Authorization: Bearer YOUR_API_KEY"
-```
-
-</CodeGroup>
-
-**Response (running):**
-
-```json
-{
-  "job_id": "job_abc123",
-  "status": "running",
-  "total_items": 150,
-  "completed_items": 45,
-  "failed_items": 2
-}
-```
-
-**Response (completed):**
-
-```json
-{
-  "job_id": "job_abc123",
-  "status": "completed",
-  "total_items": 150,
-  "completed_items": 148,
-  "failed_items": 2
-}
-```
-
-**Status Values:**
-
-| Status | Description |
-|--------|-------------|
-| `running` | Job in progress |
-| `completed` | Job finished |
-| `failed` | Job failed |
-| `cancelled` | Job was cancelled |
-
----
-
-### POST /public/catalogs/{catalog_id}/enrich/{job_id}/cancel
-
-Cancel a running enrichment job.
-
-<CodeGroup>
-
-```python Python
-response = requests.post(
-    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}/cancel",
-    headers={"Authorization": "Bearer YOUR_API_KEY"}
-)
-```
-
-```bash cURL
-curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/enrich/{job_id}/cancel" \
-  -H "Authorization: Bearer YOUR_API_KEY"
-```
-
-</CodeGroup>
-
-**Response:**
-
-```json
-{
-  "job_id": "job_abc123",
-  "status": "cancelled",
-  "total_items": 150,
-  "completed_items": 45,
-  "failed_items": 0
-}
-```
-
-Items enriched before cancellation keep their data.
+See [Enrich Examples](/enrich/examples#reuse-configuration-with-catalog-id) for more details.
