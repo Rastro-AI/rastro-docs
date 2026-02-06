@@ -91,6 +91,7 @@ const response = await fetch("https://catalogapi.rastro.ai/api/public/enrich", {
 | `max_rows` | integer | - | Process only first N items (dry run) |
 | `source_activity_id` | string | - | Resume from previous job to process remaining items |
 | `include_source_explanations` | boolean | `false` | Add explanation for each field value |
+| `webhook_url` | string | - | HTTPS URL to receive a POST when the job completes (see [Webhooks](#webhooks)) |
 
 ---
 
@@ -342,3 +343,46 @@ Every result includes `review_info` with AI reasoning:
 | `flags` | array | General flags or warnings about the extraction |
 | `field_issues` | array | Per-field issues with `field`, `severity` (error/warning/info), `message`, and `validator` |
 | `flag_record` | boolean | Whether this record needs human attention |
+
+---
+
+## Webhooks
+
+Instead of polling `GET /public/enrich/{job_id}`, you can provide a `webhook_url` to receive a POST when the job finishes. The URL **must use HTTPS**.
+
+```json
+{
+  "items": [...],
+  "output_schema": [...],
+  "async_mode": true,
+  "webhook_url": "https://yourserver.com/hooks/enrich"
+}
+```
+
+### Webhook Payload
+
+When the job completes, we POST a JSON body to your URL:
+
+```json
+{
+  "job_id": "abc123-def456-...",
+  "status": "completed",
+  "successful": 150,
+  "failed": 5,
+  "total": 155,
+  "credits_used": 150
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `job_id` | string | Use with `GET /public/enrich/{job_id}` to fetch full results |
+| `status` | string | Always `"completed"` |
+| `successful` | integer | Items enriched successfully |
+| `failed` | integer | Items that failed |
+| `total` | integer | `successful + failed` |
+| `credits_used` | integer | Credits charged |
+
+<Note>
+Webhook delivery is best-effort with a single attempt and a 30-second timeout. If delivery fails the job is unaffected — use polling as a fallback.
+</Note>
