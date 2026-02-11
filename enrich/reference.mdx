@@ -386,3 +386,159 @@ When the job completes, we POST a JSON body to your URL:
 <Note>
 Webhook delivery is best-effort with a single attempt and a 30-second timeout. If delivery fails the job is unaffected — use polling as a fallback.
 </Note>
+
+---
+
+## Job Management
+
+### GET /public/enrich/jobs
+
+List enrichment jobs for your organization, with optional status filtering and pagination.
+
+#### Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `status` | string | (all) | Filter by status: `running`, `completed`, `failed`, `cancelled` |
+| `limit` | integer | `20` | Results per page (1–100) |
+| `offset` | integer | `0` | Pagination offset |
+
+<CodeGroup>
+
+```python Python
+import requests
+
+# List running jobs
+response = requests.get(
+    "https://catalogapi.rastro.ai/api/public/enrich/jobs",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    params={"status": "running"}
+)
+jobs = response.json()
+```
+
+```bash cURL
+curl "https://catalogapi.rastro.ai/api/public/enrich/jobs?status=running" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```typescript TypeScript
+const response = await fetch(
+  "https://catalogapi.rastro.ai/api/public/enrich/jobs?status=running",
+  { headers: { "Authorization": "Bearer YOUR_API_KEY" } }
+);
+const data = await response.json();
+```
+
+</CodeGroup>
+
+#### Response
+
+```json
+{
+  "jobs": [
+    {
+      "job_id": "abc123-def456-...",
+      "status": "running",
+      "total_items": 500,
+      "completed_items": 200,
+      "failed_items": 3,
+      "created_at": "2026-02-11T10:00:00+00:00",
+      "started_at": "2026-02-11T10:00:01+00:00",
+      "finished_at": null
+    }
+  ],
+  "total": 12
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `jobs` | array | List of job summaries |
+| `total` | integer | Total jobs matching the filter |
+
+Each job object:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `job_id` | string | Job ID (use with other endpoints) |
+| `status` | string | `running`, `completed`, `failed`, or `cancelled` |
+| `total_items` | integer | Items submitted |
+| `completed_items` | integer | Items processed so far |
+| `failed_items` | integer | Items that failed |
+| `created_at` | string | ISO 8601 timestamp |
+| `started_at` | string | ISO 8601 timestamp (null if not yet started) |
+| `finished_at` | string | ISO 8601 timestamp (null if still running) |
+
+---
+
+### POST /public/enrich/{job_id}/cancel
+
+Cancel a running enrichment job. Items already processed are kept and credits are charged only for completed items.
+
+<CodeGroup>
+
+```python Python
+import requests
+
+response = requests.post(
+    f"https://catalogapi.rastro.ai/api/public/enrich/{job_id}/cancel",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+result = response.json()
+print(f"Cancelled — {result['completed_items']} items kept, {result['credits_used']} credits charged")
+```
+
+```bash cURL
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich/{job_id}/cancel" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```typescript TypeScript
+const response = await fetch(
+  `https://catalogapi.rastro.ai/api/public/enrich/${jobId}/cancel`,
+  { method: "POST", headers: { "Authorization": "Bearer YOUR_API_KEY" } }
+);
+const result = await response.json();
+```
+
+</CodeGroup>
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Activity abc123-def456 cancelled",
+  "completed_items": 200,
+  "credits_used": 200
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether cancellation succeeded |
+| `message` | string | Human-readable status |
+| `completed_items` | integer | Items that finished before cancellation |
+| `credits_used` | integer | Credits charged for completed items |
+
+<Note>
+You can only cancel jobs with status `running`. Completed or already-cancelled jobs return an error.
+</Note>
+
+---
+
+## Concurrency Limits
+
+Each organization can run up to **10 concurrent enrichment jobs**. Submitting an 11th job returns `429 Too Many Requests`:
+
+```json
+{
+  "detail": "Too many concurrent enrichment jobs (10/10). List running jobs: GET /api/public/enrich/jobs?status=running — Cancel a job: POST /api/public/enrich/{job_id}/cancel"
+}
+```
+
+To unblock yourself:
+1. **List running jobs** — `GET /api/public/enrich/jobs?status=running`
+2. **Cancel** any jobs you no longer need — `POST /api/public/enrich/{job_id}/cancel`
+3. **Retry** your request
