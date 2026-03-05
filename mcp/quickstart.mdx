@@ -19,8 +19,8 @@ You do <b>not</b> need database (Supabase/Postgres) access. MCP talks only to Ra
 ## 1. Clone and install
 
 ```bash
-git clone https://github.com/Rastro-AI/catalog-backend.git
-cd catalog-backend
+git clone https://github.com/Rastro-AI/rastro-mcp.git
+cd rastro-mcp
 uv sync
 ```
 
@@ -50,14 +50,14 @@ Use a workspace `.mcp.json` entry similar to:
       "command": "bash",
       "args": [
         "-lc",
-        "cd /ABSOLUTE/PATH/catalog-backend && export RASTRO_API_KEY='rastro_pk_...' && export RASTRO_BASE_URL='https://catalogapi.rastro.ai/api' && uv run python -m rastro_mcp.server"
+        "cd /ABSOLUTE/PATH/rastro-mcp && export RASTRO_API_KEY='rastro_pk_...' && export RASTRO_BASE_URL='https://catalogapi.rastro.ai/api' && uv run rastro-mcp"
       ]
     }
   }
 }
 ```
 
-Replace `/ABSOLUTE/PATH/catalog-backend` and the API key value with your own.
+Replace `/ABSOLUTE/PATH/rastro-mcp` and the API key value with your own.
 
 ## 5. First workflow in Codex / Claude
 
