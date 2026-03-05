@@ -223,3 +223,17 @@ response = requests.post(
 ```
 
 See [Enrich Examples](/enrich/examples#reuse-configuration-with-catalog-id) for more details.
+
+---
+
+## MCP-Oriented Endpoints
+
+These endpoints are commonly used by Rastro MCP servers for large catalog workflows:
+
+- `GET /public/catalogs/{catalog_id}/raw-items` for full-fidelity catalog row pulls
+- `GET /public/catalogs/{catalog_id}/activities` to audit pending/completed activities
+- `POST /public/catalogs/{catalog_id}/activities` to create activity shells
+- `POST /public/activities/{activity_id}/staged-changes/append` to append staged changes in chunks
+- `POST /public/activities/{activity_id}/pending-review` to finalize one review activity
+
+See [MCP Reference](/mcp/reference) for full workflow guidance.

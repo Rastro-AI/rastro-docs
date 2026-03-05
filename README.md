@@ -16,5 +16,6 @@ mintlify dev
 ├── authentication.mdx   # API keys
 ├── enrich/              # Enrich API (direct enrichment)
 ├── flows/               # Flows (GUI-built pipelines)
-└── catalogs/            # Catalog storage
+├── catalogs/            # Catalog storage
+└── mcp/                 # MCP setup for Codex / Claude
 ```

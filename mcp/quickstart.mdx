@@ -1,0 +1,94 @@
+---
+title: 'MCP Quickstart (Codex / Claude)'
+description: 'Run the Rastro MCP server in your own agent environment with API-key-only access'
+---
+
+Use Rastro from Codex or Claude through MCP to run large catalog operations safely: pull a snapshot, transform locally, stage one review activity, then apply from dashboard.
+
+<Note>
+You do <b>not</b> need database (Supabase/Postgres) access. MCP talks only to Rastro API endpoints using your API key.
+</Note>
+
+## Prerequisites
+
+- A Rastro API key from [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys)
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) installed
+- Codex or Claude Desktop with MCP support
+
+## 1. Clone and install
+
+```bash
+git clone https://github.com/Rastro-AI/catalog-backend.git
+cd catalog-backend
+uv sync
+```
+
+## 2. Set environment variables
+
+```bash
+export RASTRO_API_KEY="rastro_pk_..."
+export RASTRO_BASE_URL="https://catalogapi.rastro.ai/api"
+```
+
+## 3. Test the MCP server
+
+```bash
+uv run python -m rastro_mcp.server
+```
+
+If the command starts without errors, your MCP server is ready.
+
+## 4. Add MCP server to your agent config
+
+Use a workspace `.mcp.json` entry similar to:
+
+```json
+{
+  "mcpServers": {
+    "rastro": {
+      "command": "bash",
+      "args": [
+        "-lc",
+        "cd /ABSOLUTE/PATH/catalog-backend && export RASTRO_API_KEY='rastro_pk_...' && export RASTRO_BASE_URL='https://catalogapi.rastro.ai/api' && uv run python -m rastro_mcp.server"
+      ]
+    }
+  }
+}
+```
+
+Replace `/ABSOLUTE/PATH/catalog-backend` and the API key value with your own.
+
+## 5. First workflow in Codex / Claude
+
+Prompt example:
+
+```text
+For catalog <catalog_id>, pull a snapshot, update price/cost by my rules, compute diff, validate, and stage one pending-review activity. Do not apply automatically.
+```
+
+Expected flow:
+
+1. `execution_catalog_snapshot_pull`
+2. local transform (agent-generated Python)
+3. `execution_local_diff_compute`
+4. `execution_bundle_validate`
+5. `catalog_activity_create_transform` (or `execution_catalog_stage_dataset`)
+6. review/apply in dashboard
+
+## Safety defaults
+
+- Programmatic approve/apply is blocked in MCP.
+- One large change set is staged into one activity (internally chunked when needed).
+- Always review the dashboard diff before applying.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="MCP Reference" icon="book" href="/mcp/reference">
+    Tools, endpoints, limits, and troubleshooting
+  </Card>
+  <Card title="Catalog API" icon="database" href="/catalogs/reference">
+    Underlying API endpoints
+  </Card>
+</CardGroup>
