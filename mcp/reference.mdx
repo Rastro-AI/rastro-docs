@@ -1,0 +1,121 @@
+---
+title: 'MCP Reference'
+description: 'Rastro MCP tools, access model, and operational guidance'
+---
+
+## Access model
+
+Rastro MCP is API-first:
+
+- Auth: `Authorization: Bearer rastro_pk_...`
+- Base URL: `https://catalogapi.rastro.ai/api`
+- Data access: public API endpoints only
+- Database access: not required
+
+This means customers can run MCP in their own Codex/Claude environment without internal DB credentials.
+
+## Tool groups
+
+### `catalog_*`
+
+Catalog and activity operations:
+
+- `catalog_list`, `catalog_get`, `catalog_schema_get`, `catalog_taxonomy_get`
+- `catalog_items_query`, `catalog_item_get`
+- `catalog_activity_list`, `catalog_activity_get`, `catalog_activity_get_staged_changes`
+- `catalog_activity_create_transform`
+- `catalog_activity_audit` (activity + staged summary)
+- `catalog_activity_clear` (reject + cancel stale activities)
+- `catalog_snapshot_list`, `catalog_snapshot_create`, `catalog_snapshot_restore`
+
+### `execution_*`
+
+Local file pipeline:
+
+- `execution_catalog_snapshot_pull`
+- `execution_local_diff_compute`
+- `execution_bundle_validate`
+- `execution_catalog_stage_dataset` (one-command diff + stage)
+
+### `service_*`
+
+Specialized services:
+
+- `service_map_to_catalog_schema`
+- `service_image_run`, `service_image_status`, `service_image_list`
+
+## Catalog update pattern (recommended)
+
+1. Pull full snapshot with `execution_catalog_snapshot_pull`
+2. Transform locally (Python)
+3. Compute diff with `execution_local_diff_compute`
+4. Validate with `execution_bundle_validate`
+5. Stage a single review activity
+6. Open dashboard link and review before apply
+
+## Safety behavior
+
+- MCP does not programmatically approve/apply staged changes.
+- Deletes are supported and validated in diff/validation pipeline.
+- Large staged change sets are chunked internally but kept under one activity.
+
+## Deterministic diffing
+
+`execution_local_diff_compute` supports:
+
+- `key_field` (default `__catalog_item_id`)
+- `deterministic_key_fields` for fallback identity matching
+- `allow_row_index_fallback` for deterministic row-position fallback
+
+Outputs include:
+
+- `diff_summary`
+- `staged_changes_path`
+- `diff_details_path`
+- `field_change_counts`
+- `entity_type_change_counts`
+- key diagnostics and sample field-level changes
+
+## API endpoints used by MCP (high level)
+
+- `GET /public/catalogs/{catalog_id}`
+- `GET /public/catalogs/{catalog_id}/schema`
+- `GET /public/catalogs/{catalog_id}/taxonomy`
+- `GET /public/catalogs/{catalog_id}/items`
+- `GET /public/catalogs/{catalog_id}/raw-items`
+- `GET /public/catalogs/{catalog_id}/activities`
+- `POST /public/catalogs/{catalog_id}/activities`
+- `POST /public/activities/{activity_id}/staged-changes/append`
+- `POST /public/activities/{activity_id}/pending-review`
+- `GET /activities/{activity_id}`
+- `GET /activities/{activity_id}/staged-changes`
+- `GET /activities/{activity_id}/staged-changes/summary`
+- `POST /activities/{activity_id}/staged-changes/bulk-review` (reject-only from MCP)
+- `POST /activities/{activity_id}/cancel`
+
+## Performance tuning
+
+Optional env vars:
+
+- `RASTRO_MCP_PULL_MAX_CONCURRENCY` (default `8`)
+- `RASTRO_MCP_STAGE_BATCH_SIZE` (default `2000`)
+- `RASTRO_MCP_STAGE_RETRIES` (default `3`)
+
+## Troubleshooting
+
+### 401 / 403
+
+- Check API key is valid and belongs to the correct organization.
+
+### Snapshot returns fewer rows than expected
+
+- Use raw pulls (`prefer_raw: true`) and verify `total` count in response.
+
+### Diff appears misaligned
+
+- Pass `deterministic_key_fields` explicitly for business identity fields (e.g., `sku`, `product_id`) and re-run diff.
+
+### Too many old staged activities
+
+- Use `catalog_activity_audit` to inspect status and staged counts.
+- Use `catalog_activity_clear` to reject/cancel stale activities in bulk.

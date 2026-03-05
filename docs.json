@@ -42,6 +42,10 @@
         "pages": ["catalogs/quickstart", "catalogs/reference", "catalogs/examples"]
       },
       {
+        "group": "MCP (Codex / Claude)",
+        "pages": ["mcp/quickstart", "mcp/reference"]
+      },
+      {
         "group": "Enterprise",
         "pages": ["integrations"]
       }
