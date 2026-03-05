@@ -24,27 +24,38 @@ cd rastro-mcp
 uv sync
 ```
 
-## 2. Set environment variables
+## 2. Authenticate
+
+Option A (recommended for automation): API key
 
 ```bash
-# Option A: API key auth
 export RASTRO_API_KEY="rastro_pk_..."
+```
 
-# Option B: web-session bearer token
-# export RASTRO_ACCESS_TOKEN="<jwt_token>"
+Option B (no manual token copy): browser login from CLI
 
+```bash
+uv run rastro-mcp login
+# apply the printed export command in your shell
+```
+
+This opens `dashboard.rastro.ai`, uses your existing session, and returns the token to a localhost callback automatically.
+
+## 3. Set API base URL
+
+```bash
 export RASTRO_BASE_URL="https://catalogapi.rastro.ai/api"
 ```
 
-## 3. Test the MCP server
+## 4. Test the MCP server
 
 ```bash
-uv run python -m rastro_mcp.server
+uv run rastro-mcp
 ```
 
 If the command starts without errors, your MCP server is ready.
 
-## 4. Add MCP server to your agent config
+## 5. Add MCP server to your agent config
 
 Use a workspace `.mcp.json` entry similar to:
 
@@ -64,7 +75,7 @@ Use a workspace `.mcp.json` entry similar to:
 
 Replace `/ABSOLUTE/PATH/rastro-mcp` and the API key value with your own.
 
-## 5. First workflow in Codex / Claude
+## 6. First workflow in Codex / Claude
 
 Prompt example:
 
