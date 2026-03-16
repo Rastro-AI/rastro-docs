@@ -14,54 +14,14 @@ List all catalogs in your account.
 ```python Python
 response = requests.get(
     "https://catalogapi.rastro.ai/api/public/catalogs",
-    headers={"Authorization": "Bearer YOUR_API_KEY"}
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    params={"limit": 50, "offset": 0}
 )
 print(response.json())
 ```
 
 ```bash cURL
-curl "https://catalogapi.rastro.ai/api/public/catalogs" \
-  -H "Authorization: Bearer YOUR_API_KEY"
-```
-
-</CodeGroup>
-
-**Response:**
-
-```json
-{
-  "catalogs": [
-    {"id": "cat_123", "name": "Products", "item_count": 150}
-  ]
-}
-```
-
----
-
-<Note>
-Catalogs are created through the [Rastro dashboard](https://dashboard.rastro.ai). The public API supports listing, reading, and managing items within existing catalogs.
-</Note>
-
----
-
-## Item Management
-
-### GET /public/catalogs/{catalog_id}/items
-
-List items in a catalog.
-
-<CodeGroup>
-
-```python Python
-response = requests.get(
-    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items",
-    headers={"Authorization": "Bearer YOUR_API_KEY"},
-    params={"page": 1, "limit": 100}
-)
-```
-
-```bash cURL
-curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items?page=1&limit=100" \
+curl "https://catalogapi.rastro.ai/api/public/catalogs?limit=50&offset=0" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -71,18 +31,416 @@ curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items?page=1
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `page` | integer | 1 | Page number |
-| `limit` | integer | 100 | Items per page (max 1000) |
+| `limit` | integer | 10 | Items per page (1–100) |
+| `offset` | integer | 0 | Number of items to skip |
+
+**Response:**
+
+```json
+{
+  "catalogs": [
+    {
+      "id": "cat_123",
+      "name": "Products",
+      "description": "Main product catalog",
+      "auto_evolve_schema": true,
+      "strict_mode": false,
+      "item_count": 150,
+      "current_schema_version": "1.0",
+      "created_at": "2026-01-15T10:30:00Z"
+    }
+  ],
+  "total_count": 1,
+  "page": 1,
+  "page_size": 50
+}
+```
+
+---
+
+### GET /public/catalogs/{catalog_id}
+
+Get details of a specific catalog.
+
+**Response:** Same shape as a single catalog object from the list endpoint.
+
+---
+
+### PUT /public/catalogs/{catalog_id}
+
+Update catalog settings. Only provided fields are changed; omitted fields remain unchanged.
+
+<CodeGroup>
+
+```python Python
+response = requests.put(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "name": "Renamed Catalog",
+        "description": "Updated description",
+        "auto_evolve_schema": False,
+        "catalog_md": "# Catalog Context\nThis catalog contains industrial bearings."
+    }
+)
+```
+
+```bash cURL
+curl -X PUT "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Renamed Catalog", "description": "Updated description"}'
+```
+
+</CodeGroup>
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | No | New catalog name (1–100 chars) |
+| `description` | string | No | Updated description |
+| `auto_evolve_schema` | boolean | No | Allow automatic schema evolution |
+| `strict_mode` | boolean | No | Reject unknown fields |
+| `catalog_md` | string | No | Markdown context injected into enrichment/mapping prompts |
+
+**Response:** The updated catalog object.
+
+---
+
+### DELETE /public/catalogs/{catalog_id}
+
+Delete a catalog and all its data (items, schema, snapshots).
+
+```bash
+curl -X DELETE "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+**Response:**
+
+```json
+{"message": "Catalog cat_123 deleted successfully"}
+```
+
+---
+
+## Schema Management
+
+### GET /public/catalogs/{catalog_id}/schema
+
+Get the current schema definition, including field metadata and workflow tracking.
+
+```bash
+curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/schema" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+**Response:**
+
+```json
+{
+  "version": "1.2",
+  "schema_definition": {
+    "properties": {
+      "sku": {"type": "string", "description": "Stock keeping unit"},
+      "price": {"type": "number", "description": "Product price"}
+    },
+    "required": ["sku"]
+  },
+  "total_fields": 2,
+  "input_fields_count": 1,
+  "generated_fields_count": 1,
+  "fields_workflow_info": [...]
+}
+```
+
+---
+
+### POST /public/catalogs/{catalog_id}/schema/fields
+
+Add a new field to the catalog schema. Creates a new schema version.
+
+<CodeGroup>
+
+```python Python
+response = requests.post(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/schema/fields",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "field_name": "weight_kg",
+        "field_type": "number",
+        "description": "Product weight in kilograms",
+        "required": False,
+        "field_category": "input",
+        "unit": "kg"
+    }
+)
+```
+
+```bash cURL
+curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/schema/fields" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"field_name": "weight_kg", "field_type": "number", "description": "Product weight"}'
+```
+
+</CodeGroup>
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `field_name` | string | Yes | Name of the field |
+| `field_type` | string | Yes | Type: `string`, `number`, `boolean`, `array`, `object` |
+| `description` | string | No | Field description |
+| `required` | boolean | No | Whether the field is required (default: false) |
+| `field_category` | string | No | `input` or `generated` (default: `input`) |
+| `unit` | string | No | Unit of measurement (e.g., `kg`, `V`, `W`) |
+| `sample_values` | array | No | Example values for the field |
+| `validation_rules` | object | No | JSON Schema validation (pattern, enum, etc.) |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "catalog_id": "cat_123",
+  "new_schema_version": "1.3",
+  "previous_schema_version": "1.2",
+  "fields_added": ["weight_kg"],
+  "message": "Field 'weight_kg' added successfully. New schema version: 1.3"
+}
+```
+
+---
+
+### PUT /public/catalogs/{catalog_id}/schema/fields/batch
+
+Add, update, and/or remove multiple fields in one atomic operation.
+
+<CodeGroup>
+
+```python Python
+response = requests.put(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/schema/fields/batch",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "fields_to_add": [
+            {"field_name": "color", "field_type": "string", "description": "Product color"},
+            {"field_name": "weight", "field_type": "number", "unit": "kg"}
+        ],
+        "fields_to_update": [
+            {"field_name": "price", "description": "Updated price description"}
+        ],
+        "fields_to_remove": ["old_field"],
+        "reason": "Schema cleanup"
+    }
+)
+```
+
+```bash cURL
+curl -X PUT "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/schema/fields/batch" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fields_to_add": [{"field_name": "color", "field_type": "string"}],
+    "fields_to_remove": ["old_field"],
+    "reason": "Schema cleanup"
+  }'
+```
+
+</CodeGroup>
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `fields_to_add` | array | No | Fields to add (same shape as POST schema/fields) |
+| `fields_to_update` | array | No | Fields to update (include `field_name` + changed attributes) |
+| `fields_to_remove` | array | No | Field names to remove |
+| `reason` | string | No | Reason for the changes |
+
+**Response:** Same shape as POST schema/fields response.
+
+---
+
+## Taxonomy Management
+
+### GET /public/catalogs/{catalog_id}/taxonomy
+
+Get the catalog's taxonomy with computed inheritance (levels, paths, inherited attributes).
+
+Returns `null` if no taxonomy is configured.
+
+```bash
+curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/taxonomy" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Supports ETag caching via `If-None-Match` header — returns `304 Not Modified` when unchanged.
+
+---
+
+### PUT /public/catalogs/{catalog_id}/taxonomy
+
+Set or replace the catalog taxonomy. Creates a new schema version.
+
+<CodeGroup>
+
+```python Python
+response = requests.put(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/taxonomy",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "name": "Product Categories",
+        "hierarchy_levels": ["Category", "Subcategory"],
+        "nodes": {
+            "electronics": {
+                "name": "Electronics",
+                "parent": None,
+                "attributes": []
+            },
+            "phones": {
+                "name": "Phones",
+                "parent": "electronics",
+                "attributes": [
+                    {"name": "brand", "type": "enum", "values": ["Apple", "Samsung"]}
+                ]
+            }
+        }
+    }
+)
+```
+
+```bash cURL
+curl -X PUT "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/taxonomy" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Product Categories",
+    "hierarchy_levels": ["Category"],
+    "nodes": {
+      "electronics": {"name": "Electronics", "parent": null, "attributes": []}
+    }
+  }'
+```
+
+</CodeGroup>
+
+**Response:** The enriched taxonomy with computed fields (level, path, children, inherited_attributes).
+
+---
+
+### DELETE /public/catalogs/{catalog_id}/taxonomy
+
+Remove taxonomy from the catalog. Creates a new schema version without taxonomy.
+
+```bash
+curl -X DELETE "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/taxonomy" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+**Response:** `204 No Content`
+
+---
+
+## Catalog Context
+
+### GET /public/catalogs/{catalog_id}/catalog-md
+
+Get the catalog's markdown context (injected into enrichment and mapping prompts).
+
+```bash
+curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/catalog-md" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+**Response:**
+
+```json
+{"catalog_id": "cat_123", "catalog_md": "# Product Context\nThis catalog contains..."}
+```
+
+---
+
+### PUT /public/catalogs/{catalog_id}/catalog-md
+
+Update the catalog's markdown context directly (versioned).
+
+```bash
+curl -X PUT "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/catalog-md" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"catalog_md": "# Updated Context\nNew instructions for enrichment."}'
+```
+
+<Note>
+You can also update `catalog_md` via `PUT /public/catalogs/{catalog_id}` by including the `catalog_md` field in the request body.
+</Note>
+
+---
+
+### GET /public/catalogs/{catalog_id}/quality-prompt
+
+Get the catalog's quality prompt (used by the judge and readiness checks).
+
+### PUT /public/catalogs/{catalog_id}/quality-prompt
+
+Set the quality prompt.
+
+```json
+{"prompt": "Rate completeness of product specs on a 1-5 scale..."}
+```
+
+---
+
+## Item Management
+
+### GET /public/catalogs/{catalog_id}/items
+
+List items in a catalog with pagination, search, and sorting.
+
+<CodeGroup>
+
+```python Python
+response = requests.get(
+    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    params={"limit": 50, "offset": 0, "sort": "created_at:desc"}
+)
+```
+
+```bash cURL
+curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items?limit=50&offset=0" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+</CodeGroup>
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | integer | 50 | Items per page (1–1000) |
+| `offset` | integer | 0 | Number of items to skip |
+| `search` | string | — | Text search across all fields |
+| `sort` | string | — | Sort by `field:direction` (e.g., `created_at:desc`) |
 
 **Response:**
 
 ```json
 {
   "items": [
-    {"id": "item_123", "sku": "A1", "title": "Product A", "price": 29.99}
+    {
+      "id": "item_123",
+      "data": {"title": "Product A", "price": 29.99, "variants": [...]},
+      "metadata": {"created_at": "2026-01-15T10:30:00Z", "updated_at": null, "version": null}
+    }
   ],
   "total": 150,
-  "page": 1
+  "page": 0,
+  "limit": 50
 }
 ```
 
@@ -90,34 +448,9 @@ curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items?page=1
 
 ### GET /public/catalogs/{catalog_id}/items/{item_id}
 
-Get a single item by ID.
+Get a single item by database ID.
 
-<CodeGroup>
-
-```python Python
-response = requests.get(
-    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id}",
-    headers={"Authorization": "Bearer YOUR_API_KEY"}
-)
-```
-
-```bash cURL
-curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id}" \
-  -H "Authorization: Bearer YOUR_API_KEY"
-```
-
-</CodeGroup>
-
-**Response:**
-
-```json
-{
-  "id": "item_123",
-  "sku": "A1",
-  "title": "Product A",
-  "price": 29.99
-}
-```
+**Response:** Single item in the same shape as list items.
 
 ---
 
@@ -125,34 +458,27 @@ curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_
 
 Update a single item. Only the fields you provide will be updated.
 
-<CodeGroup>
-
-```python Python
-response = requests.put(
-    f"https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id}",
-    headers={"Authorization": "Bearer YOUR_API_KEY"},
-    json={"price": 24.99}
-)
-```
-
-```bash cURL
-curl -X PUT "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/{item_id}" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"price": 24.99}'
-```
-
-</CodeGroup>
-
-**Request Body:** Any fields to update.
+**Request Body:** Any fields to update (dynamic schema).
 
 **Response:** The updated item.
 
 ---
 
+### DELETE /public/catalogs/{catalog_id}/items/{item_id}
+
+Delete a single item.
+
+**Response:**
+
+```json
+{"message": "Item deleted successfully"}
+```
+
+---
+
 ### POST /public/catalogs/{catalog_id}/items/bulk
 
-Create or update up to 1000 items at once.
+Create or update up to 1000 items at once. Matching is based on the catalog's configured unique ID field.
 
 <CodeGroup>
 
@@ -164,8 +490,7 @@ response = requests.post(
         "items": [
             {"sku": "A1", "title": "Product A", "price": 29.99},
             {"sku": "A2", "title": "Product B", "price": 39.99}
-        ],
-        "unique_field": "sku"
+        ]
     }
 )
 ```
@@ -174,13 +499,7 @@ response = requests.post(
 curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items/bulk" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{
-    "items": [
-      {"sku": "A1", "title": "Product A", "price": 29.99},
-      {"sku": "A2", "title": "Product B", "price": 39.99}
-    ],
-    "unique_field": "sku"
-  }'
+  -d '{"items": [{"sku": "A1", "title": "Product A", "price": 29.99}]}'
 ```
 
 </CodeGroup>
@@ -190,15 +509,23 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/item
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `items` | array | Yes | Array of item objects (max 1000) |
-| `unique_field` | string | Yes | Field to match for upserts |
+| `source_info` | object | No | Metadata about the data source |
+| `auto_evolve_schema` | boolean | No | Override catalog's auto_evolve_schema setting |
+
+<Note>
+Item matching for upserts uses the catalog's configured unique ID field — you do not need to specify a `unique_field` parameter. Configure the unique ID field when creating the catalog.
+</Note>
 
 **Response:**
 
 ```json
 {
-  "created": 10,
-  "updated": 5,
-  "failed": 0
+  "success": true,
+  "items_processed": 15,
+  "items_created": 10,
+  "items_failed": 0,
+  "schema_evolved": false,
+  "errors": []
 }
 ```
 
@@ -223,6 +550,22 @@ response = requests.post(
 ```
 
 See [Enrich Examples](/enrich/examples#reuse-configuration-with-catalog-id) for more details.
+
+---
+
+## Snapshots
+
+### GET /public/catalogs/{catalog_id}/snapshots
+
+List catalog snapshots.
+
+### POST /public/catalogs/{catalog_id}/snapshots
+
+Create a snapshot. Request body: `{"reason": "Before migration"}`.
+
+### POST /public/catalogs/{catalog_id}/snapshots/{snapshot_id}/restore
+
+Restore from a snapshot. Automatically creates a safety snapshot first.
 
 ---
 
