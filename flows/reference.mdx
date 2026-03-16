@@ -3,6 +3,49 @@ title: 'Flows API Reference'
 description: 'Complete API documentation for Flows endpoints'
 ---
 
+## GET /public/workflows
+
+List available workflows for your organization.
+
+<CodeGroup>
+
+```python Python
+response = requests.get(
+    "https://catalogapi.rastro.ai/api/public/workflows",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    params={"limit": 50, "offset": 0}
+)
+print(response.json())
+```
+
+```bash cURL
+curl "https://catalogapi.rastro.ai/api/public/workflows?limit=50" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+</CodeGroup>
+
+### Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `search` | string | — | Case-insensitive search on name/description |
+| `limit` | integer | 50 | Items per page (1–100) |
+| `offset` | integer | 0 | Items to skip |
+
+### Response
+
+```json
+{
+  "workflows": [
+    {"id": "wf_123", "name": "Enrich Products", "description": "..."}
+  ],
+  "total": 5
+}
+```
+
+---
+
 ## POST /public/workflows/{flow_id}/execute
 
 Start a flow execution with input data.

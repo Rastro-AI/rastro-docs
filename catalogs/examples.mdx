@@ -27,10 +27,10 @@ items = [
 result = requests.post(
     f"{BASE_URL}/public/catalogs/{catalog_id}/items/bulk",
     headers=headers,
-    json={"items": items, "unique_field": "sku"}
+    json={"items": items}
 ).json()
 
-print(f"Added {result['created']} items")
+print(f"Added {result['items_created']} items")
 
 # 3. List items
 items = requests.get(
@@ -172,11 +172,11 @@ class CatalogClient:
         )
         return response.json()
 
-    def bulk_upsert(self, catalog_id, items, unique_field):
+    def bulk_upsert(self, catalog_id, items):
         response = requests.post(
             f"{self.base_url}/public/catalogs/{catalog_id}/items/bulk",
             headers=self._headers(),
-            json={"items": items, "unique_field": unique_field}
+            json={"items": items}
         )
         return response.json()
 
@@ -224,7 +224,7 @@ items = [
     {"sku": "6206-2RS", "name": "Deep Groove Ball Bearing"},
     {"sku": "6207-2RS", "name": "Deep Groove Ball Bearing"}
 ]
-client.bulk_upsert(catalog_id, items, "sku")
+client.bulk_upsert(catalog_id, items)
 
 # Enrich and wait
 result = client.enrich_and_wait(
@@ -299,13 +299,13 @@ class CatalogClient {
     return response.json();
   }
 
-  async bulkUpsert(catalogId: string, items: object[], uniqueField: string) {
+  async bulkUpsert(catalogId: string, items: object[]) {
     const response = await fetch(
       `${BASE_URL}/public/catalogs/${catalogId}/items/bulk`,
       {
         method: "POST",
         headers: this.headers(),
-        body: JSON.stringify({ items, unique_field: uniqueField })
+        body: JSON.stringify({ items, source_info: { source: "api" } })
       }
     );
     return response.json();
@@ -367,7 +367,7 @@ const items = [
   { sku: "6205-2RS", name: "Deep Groove Ball Bearing" },
   { sku: "6206-2RS", name: "Deep Groove Ball Bearing" }
 ];
-await client.bulkUpsert(catalogId, items, "sku");
+await client.bulkUpsert(catalogId, items);
 
 // Enrich and wait
 const result = await client.enrichAndWait(
