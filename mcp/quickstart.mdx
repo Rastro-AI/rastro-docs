@@ -1,108 +1,150 @@
 ---
-title: 'MCP Quickstart (Codex / Claude)'
-description: 'Run the Rastro MCP server in your own agent environment with API-key-only access'
+title: 'MCP Quickstart'
+description: 'Set up the Rastro MCP server in Claude Code, Claude Desktop, Cursor, or Codex'
 ---
 
-Use Rastro from Codex or Claude through MCP to run large catalog operations safely: pull a snapshot, transform locally, stage one review activity, then apply from dashboard.
+Set up the Rastro MCP server to run catalog operations from your AI agent. Pull snapshots, transform data locally, stage changes for review, and apply from the dashboard.
 
 <Note>
-You do <b>not</b> need database (Supabase/Postgres) access. MCP talks only to Rastro API endpoints using your API key.
+No database credentials needed — the MCP server talks only to the Rastro API.
 </Note>
 
 ## Prerequisites
 
-- A Rastro API key from [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys)
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) installed
-- Codex or Claude Desktop with MCP support
+- A Rastro account at [dashboard.rastro.ai](https://dashboard.rastro.ai)
+- [uv](https://docs.astral.sh/uv/) installed (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
 
-## 1. Clone and install
+## Authenticate
 
-```bash
-git clone https://github.com/Rastro-AI/rastro-mcp.git
-cd rastro-mcp
-uv sync
-```
+Choose one of these methods:
 
-## 2. Authenticate
-
-Option A (recommended for automation): API key
+**Option A — Browser login (recommended)**
 
 ```bash
-export RASTRO_API_KEY="rastro_pk_..."
+uvx rastro.ai login
 ```
 
-Option B (no manual token copy): browser login from CLI
+This opens [dashboard.rastro.ai](https://dashboard.rastro.ai) in your browser. Log in, and the token is printed to your terminal. Copy the `RASTRO_ACCESS_TOKEN` value for the next step.
 
-```bash
-uv run rastro-mcp login
-# apply the printed export command in your shell
-```
+**Option B — API key**
 
-This opens `dashboard.rastro.ai`, uses your existing session, and returns the token to a localhost callback automatically.
+Create an API key at [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys) and copy it.
 
-## 3. Set API base URL
+## Configure your client
 
-```bash
-export RASTRO_BASE_URL="https://catalogapi.rastro.ai/api"
-```
+<Tabs>
+  <Tab title="Claude Code">
+    With browser login token:
 
-## 4. Test the MCP server
+    ```bash
+    claude mcp add rastro \
+      -e RASTRO_ACCESS_TOKEN=<token-from-login> \
+      -- uvx rastro.ai
+    ```
 
-```bash
-uv run rastro-mcp
-```
+    Or with API key:
 
-If the command starts without errors, your MCP server is ready.
+    ```bash
+    claude mcp add rastro \
+      -e RASTRO_API_KEY=rastro_pk_... \
+      -- uvx rastro.ai
+    ```
+  </Tab>
+  <Tab title="Claude Desktop">
+    Open your config file:
 
-## 5. Add MCP server to your agent config
+    - **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+    - **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
-Use a workspace `.mcp.json` entry similar to:
+    Add the Rastro server:
 
-```json
-{
-  "mcpServers": {
-    "rastro": {
-      "command": "bash",
-      "args": [
-        "-lc",
-        "cd /ABSOLUTE/PATH/rastro-mcp && export RASTRO_API_KEY='rastro_pk_...' && export RASTRO_BASE_URL='https://catalogapi.rastro.ai/api' && uv run rastro-mcp"
-      ]
+    ```json
+    {
+      "mcpServers": {
+        "rastro": {
+          "command": "uvx",
+          "args": ["rastro.ai"],
+          "env": {
+            "RASTRO_API_KEY": "rastro_pk_..."
+          }
+        }
+      }
     }
-  }
-}
-```
+    ```
 
-Replace `/ABSOLUTE/PATH/rastro-mcp` and the API key value with your own.
+    Restart Claude Desktop after saving.
+  </Tab>
+  <Tab title="Cursor">
+    Open **Cursor Settings** (Cmd/Ctrl + Shift + J) → **MCP** tab → **Add new MCP server**.
 
-## 6. First workflow in Codex / Claude
+    Or add to `.cursor/mcp.json` in your project root:
 
-Prompt example:
+    ```json
+    {
+      "mcpServers": {
+        "rastro": {
+          "command": "uvx",
+          "args": ["rastro.ai"],
+          "env": {
+            "RASTRO_API_KEY": "rastro_pk_..."
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Codex">
+    Add to `~/.codex/config.toml`:
+
+    ```toml
+    [mcp_servers.rastro]
+    command = "uvx"
+    args = ["rastro.ai"]
+    env = { RASTRO_API_KEY = "rastro_pk_..." }
+    ```
+  </Tab>
+</Tabs>
+
+## Verify
+
+Ask your agent:
 
 ```text
-For catalog <catalog_id>, pull a snapshot, update price/cost by my rules, compute diff, validate, and stage one pending-review activity. Do not apply automatically.
+List my Rastro catalogs
+```
+
+If the server is connected, it will call `catalog_list` and return your catalogs.
+
+## First workflow
+
+Prompt your agent:
+
+```text
+For catalog <catalog_id>, pull a snapshot, update price/cost by my rules,
+compute diff, validate, and stage one pending-review activity.
+Do not apply automatically.
 ```
 
 Expected flow:
 
 1. `execution_catalog_snapshot_pull`
-2. local transform (agent-generated Python)
+2. Local transform (agent-generated Python)
 3. `execution_local_diff_compute`
 4. `execution_bundle_validate`
 5. `catalog_activity_create_transform` (or `execution_catalog_stage_dataset`)
-6. review/apply in dashboard
+6. Review and apply in the [dashboard](https://dashboard.rastro.ai)
 
 ## Safety defaults
 
-- Programmatic approve/apply is blocked in MCP.
-- One large change set is staged into one activity (internally chunked when needed).
+- Programmatic approve/apply is blocked — all changes require dashboard review.
+- Large change sets are staged into one activity (chunked internally).
 - Always review the dashboard diff before applying.
 
 ## Next
 
 <CardGroup cols={2}>
   <Card title="MCP Reference" icon="book" href="/mcp/reference">
-    Tools, endpoints, limits, and troubleshooting
+    Full tool reference and troubleshooting
   </Card>
   <Card title="Catalog API" icon="database" href="/catalogs/reference">
     Underlying API endpoints
