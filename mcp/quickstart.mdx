@@ -16,33 +16,25 @@ No database credentials needed — the MCP server talks only to the Rastro API.
 
 ## Authenticate
 
-Choose one of these methods:
-
-**Option A — Browser login (recommended)**
-
 ```bash
 uvx rastro.ai login
 ```
 
-This opens [dashboard.rastro.ai](https://dashboard.rastro.ai) in your browser. Log in, and the token is printed to your terminal. Copy the `RASTRO_AUTH_TOKEN` value for the next step.
+This opens [dashboard.rastro.ai](https://dashboard.rastro.ai) in your browser. Log in, and your credentials are saved automatically.
 
-**Option B — API key**
-
-Create an API key at [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys) and copy it.
+<Note>
+Alternatively, create an API key at [dashboard.rastro.ai/settings/api-keys](https://dashboard.rastro.ai/settings/api-keys) and pass it as `RASTRO_API_KEY` in your client config below.
+</Note>
 
 ## Configure your client
 
 <Tabs>
   <Tab title="Claude Code">
-    With browser login token:
-
     ```bash
-    claude mcp add rastro \
-      -e RASTRO_AUTH_TOKEN=<token-from-login> \
-      -- uvx rastro.ai
+    claude mcp add rastro -- uvx rastro.ai
     ```
 
-    Or with API key:
+    If using an API key instead of browser login:
 
     ```bash
     claude mcp add rastro \
@@ -56,7 +48,20 @@ Create an API key at [dashboard.rastro.ai/settings/api-keys](https://dashboard.r
     - **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
     - **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
-    Add the Rastro server:
+    If you ran `uvx rastro.ai login` above:
+
+    ```json
+    {
+      "mcpServers": {
+        "rastro": {
+          "command": "uvx",
+          "args": ["rastro.ai"]
+        }
+      }
+    }
+    ```
+
+    Or with an API key:
 
     ```json
     {
@@ -84,17 +89,30 @@ Create an API key at [dashboard.rastro.ai/settings/api-keys](https://dashboard.r
       "mcpServers": {
         "rastro": {
           "command": "uvx",
-          "args": ["rastro.ai"],
-          "env": {
-            "RASTRO_API_KEY": "rastro_pk_..."
-          }
+          "args": ["rastro.ai"]
         }
       }
+    }
+    ```
+
+    If using an API key instead of browser login, add an `"env"` field:
+
+    ```json
+    "env": {
+      "RASTRO_API_KEY": "rastro_pk_..."
     }
     ```
   </Tab>
   <Tab title="Codex">
     Add to `~/.codex/config.toml`:
+
+    ```toml
+    [mcp_servers.rastro]
+    command = "uvx"
+    args = ["rastro.ai"]
+    ```
+
+    If using an API key instead of browser login:
 
     ```toml
     [mcp_servers.rastro]
