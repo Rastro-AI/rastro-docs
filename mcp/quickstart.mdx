@@ -24,7 +24,7 @@ Choose one of these methods:
 uvx rastro.ai login
 ```
 
-This opens [dashboard.rastro.ai](https://dashboard.rastro.ai) in your browser. Log in, and the token is printed to your terminal. Copy the `RASTRO_ACCESS_TOKEN` value for the next step.
+This opens [dashboard.rastro.ai](https://dashboard.rastro.ai) in your browser. Log in, and the token is printed to your terminal. Copy the `RASTRO_AUTH_TOKEN` value for the next step.
 
 **Option B — API key**
 
@@ -38,7 +38,7 @@ Create an API key at [dashboard.rastro.ai/settings/api-keys](https://dashboard.r
 
     ```bash
     claude mcp add rastro \
-      -e RASTRO_ACCESS_TOKEN=<token-from-login> \
+      -e RASTRO_AUTH_TOKEN=<token-from-login> \
       -- uvx rastro.ai
     ```
 
