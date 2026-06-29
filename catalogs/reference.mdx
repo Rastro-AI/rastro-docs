@@ -5,6 +5,74 @@ description: 'Complete API documentation for Catalog endpoints'
 
 ## Catalog Management
 
+### POST /public/catalogs
+
+Create a catalog with an initial JSON Schema.
+
+<CodeGroup>
+
+```python Python
+response = requests.post(
+    "https://catalogapi.rastro.ai/api/public/catalogs",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "name": "Products",
+        "description": "Main product catalog",
+        "unique_id_field": "sku",
+        "product_id_field": "product_id",
+        "auto_evolve_schema": True,
+        "strict_mode": False,
+        "schema_definition": {
+            "properties": {
+                "sku": {"type": "string", "description": "Stock keeping unit"},
+                "title": {"type": "string", "description": "Product title"},
+                "price": {"type": "number", "description": "Product price"}
+            },
+            "required": ["sku"]
+        }
+    }
+)
+```
+
+```bash cURL
+curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Products",
+    "unique_id_field": "sku",
+    "schema_definition": {
+      "properties": {
+        "sku": {"type": "string"},
+        "title": {"type": "string"}
+      },
+      "required": ["sku"]
+    }
+  }'
+```
+
+</CodeGroup>
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | Yes | Catalog name (1-100 chars) |
+| `description` | string | No | Optional description |
+| `unique_id_field` | string | Yes | Legacy compatibility field required by the public create request. Include the intended business key, such as `sku`, in your schema and item data; this request field is not a separate runtime selector |
+| `product_id_field` | string | No | Field used to group variants under products |
+| `auto_evolve_schema` | boolean | No | Allow automatic schema evolution |
+| `strict_mode` | boolean | No | Reject unknown fields |
+| `schema_definition` | object | Yes | Initial JSON Schema with `properties` and optional `required` |
+| `validation_rules` | object | No | Catalog-level validation rules |
+| `catalog_md` | string | No | Markdown context for enrichment/mapping prompts |
+| `master_catalog_id` | string | No | Master catalog to inherit defaults from |
+| `use_master_catalog_defaults` | boolean | No | Whether to inherit defaults from the org default master catalog |
+
+**Response:** The created catalog object.
+
+---
+
 ### GET /public/catalogs
 
 List all catalogs in your account.
@@ -192,10 +260,12 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/sche
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `field_name` | string | Yes | Name of the field |
-| `field_type` | string | Yes | Type: `string`, `number`, `boolean`, `array`, `object` |
+| `field_type` | string | Yes | Type such as `string`, `number`, `integer`, `boolean`, `array`, or `object` |
 | `description` | string | No | Field description |
 | `required` | boolean | No | Whether the field is required (default: false) |
-| `field_category` | string | No | `input` or `generated` (default: `input`) |
+| `field_category` | string | No | `input` or `generated`. Stored as workflow-tracking metadata when `workflow_id` is provided |
+| `position` | string | No | Where to add the field: `top` or `bottom` |
+| `workflow_id` | string | No | Workflow ID associated with the schema change |
 | `unit` | string | No | Unit of measurement (e.g., `kg`, `V`, `W`) |
 | `sample_values` | array | No | Example values for the field |
 | `validation_rules` | object | No | JSON Schema validation (pattern, enum, etc.) |
@@ -425,6 +495,7 @@ curl "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items?limit=
 | `limit` | integer | 50 | Items per page (1–1000) |
 | `offset` | integer | 0 | Number of items to skip |
 | `search` | string | — | Text search across all fields |
+| `search_query` | string | — | Alias for `search` |
 | `sort` | string | — | Sort by `field:direction` (e.g., `created_at:desc`) |
 
 **Response:**
@@ -454,6 +525,31 @@ Get a single item by database ID.
 
 ---
 
+### POST /public/catalogs/{catalog_id}/items
+
+Upsert a single item. Put the business identifier inside `data` (for example, `{"sku": "A1"}`); the legacy `unique_identifier` field is still required by the request shape but is not used as a separate selector.
+
+```bash
+curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/items" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "unique_identifier": "A1",
+    "data": {"sku": "A1", "title": "Product A", "price": 29.99},
+    "source_info": {"source": "public_api"}
+  }'
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `unique_identifier` | string | Yes | Legacy compatibility field. Send the same value as the identifier inside `data` |
+| `data` | object | Yes | Item data to write |
+| `source_info` | object | No | Metadata recorded with the write |
+
+**Response:** The created or updated item.
+
+---
+
 ### PUT /public/catalogs/{catalog_id}/items/{item_id}
 
 Update a single item. Only the fields you provide will be updated.
@@ -478,7 +574,7 @@ Delete a single item.
 
 ### POST /public/catalogs/{catalog_id}/items/bulk
 
-Create or update up to 1000 items at once. Matching is based on the catalog's configured unique ID field.
+Create or update up to 1000 items at once. Include your business key fields, such as `sku`, in each item object.
 
 <CodeGroup>
 
@@ -510,10 +606,10 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/item
 |-----------|------|----------|-------------|
 | `items` | array | Yes | Array of item objects (max 1000) |
 | `source_info` | object | No | Metadata about the data source |
-| `auto_evolve_schema` | boolean | No | Override catalog's auto_evolve_schema setting |
+| `auto_evolve_schema` | boolean | No | Accepted for compatibility. Public bulk writes currently allow schema evolution from the submitted item data |
 
 <Note>
-Item matching for upserts uses the catalog's configured unique ID field — you do not need to specify a `unique_field` parameter. Configure the unique ID field when creating the catalog.
+There is no `unique_field` query parameter. Put the business key fields directly in each item object.
 </Note>
 
 **Response:**
@@ -526,6 +622,68 @@ Item matching for upserts uses the catalog's configured unique ID field — you 
   "items_failed": 0,
   "schema_evolved": false,
   "errors": []
+}
+```
+
+---
+
+## Product Variant Management
+
+Use these endpoints when a catalog groups variants under a product item. The `{product_id}` path parameter is the parent product item's database ID, not the business `product_id` field value stored in row data.
+
+### POST /public/catalogs/{catalog_id}/products/{product_id}/items
+
+Create one variant under a product.
+
+```bash
+curl -X POST "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/products/{product_item_id}/items" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"sku":"SHIRT-001-RED-M","color":"Red","size":"M","price":29.99}'
+```
+
+### PUT /public/catalogs/{catalog_id}/products/{product_id}
+
+Update product-level fields shared by variants.
+
+```bash
+curl -X PUT "https://catalogapi.rastro.ai/api/public/catalogs/{catalog_id}/products/{product_item_id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"product_title":"Classic T-Shirt","product_brand":"MyBrand"}'
+```
+
+### POST /public/catalogs/{catalog_id}/products/{product_id}/items/bulk
+
+Bulk upsert variants for one product.
+
+```json
+{
+  "product": {
+    "product_title": "Classic T-Shirt",
+    "product_brand": "MyBrand"
+  },
+  "variants": [
+    {"sku": "SHIRT-001-RED-M", "color": "Red", "size": "M"},
+    {"sku": "SHIRT-001-BLUE-M", "color": "Blue", "size": "M"}
+  ],
+  "source_info": {"source": "public_api"},
+  "auto_evolve_schema": true
+}
+```
+
+**Response:**
+
+```json
+{
+  "product_id": "SHIRT-001",
+  "items_processed": 2,
+  "items_created": 2,
+  "items_updated": 0,
+  "items_failed": 0,
+  "schema_evolved": false,
+  "errors": [],
+  "warnings": []
 }
 ```
 
@@ -544,7 +702,7 @@ response = requests.post(
         "items": [
             {"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"}
         ],
-        "speed": "slow"
+        "speed": "deep"
     }
 )
 ```
@@ -573,10 +731,15 @@ Restore from a snapshot. Automatically creates a safety snapshot first.
 
 These endpoints are commonly used by Rastro MCP servers for large catalog workflows:
 
-- `GET /public/catalogs/{catalog_id}/raw-items` for full-fidelity catalog row pulls
+- `GET /public/catalogs/{catalog_id}/raw-items` for full-fidelity catalog row pulls. Supports `limit` (1-5000, default 1000), `offset`, `entity_type=product|variant`, `search`, `sort_field`, and `sort_order=asc|desc`
+- `GET /public/catalogs/{catalog_id}/raw-items/{item_id}` for a single raw catalog row
 - `GET /public/catalogs/{catalog_id}/activities` to audit pending/completed activities
 - `POST /public/catalogs/{catalog_id}/activities` to create activity shells
+- `POST /public/catalogs/{catalog_id}/activities/custom-transform` to create a custom transform activity
+- `POST /public/catalogs/{catalog_id}/activities/{activity_id}/save-workflow` to save an activity as a workflow
 - `POST /public/activities/{activity_id}/staged-changes/append` to append staged changes in chunks
 - `POST /public/activities/{activity_id}/pending-review` to finalize one review activity
+
+Activity listing supports `status`, `type`, `limit`, and `offset` query parameters. Snapshots support `snapshot_type`, `limit`, and `offset`.
 
 See [MCP Reference](/mcp/reference) for full workflow guidance.

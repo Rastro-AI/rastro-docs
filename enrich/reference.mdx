@@ -62,16 +62,20 @@ const response = await fetch("https://catalogapi.rastro.ai/api/public/enrich", {
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `items` | array | Yes | - | JSON objects to enrich |
-| `output_schema` | array | Yes | - | Fields to extract (see [Output Schema](#output-schema)) |
+| `items` | array | Conditional | `[]` | JSON objects to enrich. Required unless you provide `source_activity_id`, `reextract_from_activity_id`, `source_catalog_id`, or multipart `items_file` |
+| `output_schema` | array | Conditional | `[]` | Fields to extract. Required unless supplied by `catalog_id`, `template_id`, or a source activity/catalog |
 | `prompt` | string | No | `""` | Search prompt guiding web research |
+| `template_id` | string | No | - | Apply an organization-scoped enrichment template. Template defaults fill omitted request fields and template safety controls remain enforced |
+| `attribute_sets` | object | No | - | Registry for repeated requested-attribute definitions. Items reference entries with `attribute_set_id` |
+| `source_hint_sets` | object | No | - | Registry for repeated source hints. Items reference entries with `source_hint_set_id` |
 
 ### Search Options
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `speed` | string | `"medium"` | `"fast"` (~1 min), `"medium"` (~2 min), `"slow"` (10-15 min, most thorough), `"cheap"` (fastest, uses lighter model) |
+| `speed` | string | `"deep"` | `"fast"` (quick), `"medium"` (balanced), `"deep"`/`"slow"` (thorough), `"ultra_slow"` (maximum reasoning), `"cheap"` (lowest cost) |
 | `allowed_domains` | array | any | Restrict sources to these domains only |
+| `blocked_domains` | array | - | Exclude these domains from search and URL fetching |
 | `web_search` | boolean | `true` | Set `false` to skip web search and use input data directly |
 
 ### Taxonomy & Quality
@@ -80,19 +84,41 @@ const response = await fetch("https://catalogapi.rastro.ai/api/public/enrich", {
 |-----------|------|---------|-------------|
 | `taxonomy` | object | - | Taxonomy definition for category prediction |
 | `predict_taxonomy` | boolean | `false` | Predict category for each item |
-| `quality_prompt` | string | - | Prompt for quality scoring (adds 1-5 score) |
+| `predict_taxonomy_attributes` | boolean | `true` | Predict category-specific `taxonomy_attributes` after classification |
 | `validate_semantics` | boolean | `false` | AI validates values match field descriptions |
+| `low_confidence` | object | - | Return plausible but weak candidates outside canonical output |
 
 ### Job Control
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `catalog_id` | string | - | Catalog ID from the dashboard — automatically applies its schema, taxonomy, and settings |
+| `source_catalog_id` | string | - | Read all items from this catalog as enrichment input |
 | `async_mode` | boolean | `false` | Return immediately with `job_id` |
 | `max_rows` | integer | - | Process only first N items (dry run) |
 | `source_activity_id` | string | - | Resume from previous job to process remaining items |
-| `include_source_explanations` | boolean | `false` | Add explanation for each field value |
+| `reextract_from_activity_id` | string | - | Re-extract from stored research in a previous activity, with optional prompt/schema/feedback changes |
+| `include_source_explanations` | boolean | `true` | Add explanation for each field value. Public jobs keep this enabled |
+| `include_service_usage` | boolean | `false` | Include detailed cost, token, and call metrics when the job completes |
+| `capture_source_artifacts` | boolean | `false` | Preserve durable source copies for audit trails |
+| `host_media` | boolean | `false` | Copy returned image/document URLs into Rastro-hosted storage |
+| `strict_hosted_media` | boolean | `false` | Clear media/document outputs unless hosting succeeds |
 | `webhook_url` | string | - | HTTPS URL to receive a POST when the job completes (see [Webhooks](#webhooks)) |
+
+---
+
+## Large Jobs And File Uploads
+
+Inline JSON requests are capped at 1000 items and 10 MB. For larger jobs, send `multipart/form-data` with a small `request_json` field and exactly one `items_file` upload.
+
+```bash
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F 'request_json={"output_schema":[{"name":"manufacturer","type":"string","description":"Brand or manufacturer"}],"speed":"deep","async_mode":true}' \
+  -F "items_file=@items.json;type=application/json"
+```
+
+`items_file` must be either a JSON array of item objects or an object with an `items` array. Do not send `items_storage_url`; that field is internal.
 
 ---
 
@@ -168,6 +194,9 @@ Define fields to extract. Each field needs a `name`, `type`, and `description`.
 | `successful` | integer | Successfully enriched items |
 | `credits_used` | integer | Credits used (1 per item) |
 | `status` | string | `"running"`, `"completed"`, or `"failed"` |
+| `completed_items` | integer | Items with results available so far. Present on polling responses |
+| `pricing_estimates` | object | Pricing estimate details when available |
+| `knowledge_base_sources` | object | Source IDs to hosted document URLs when a knowledge base is used |
 
 ### Result Item Fields
 
@@ -180,10 +209,10 @@ Define fields to extract. Each field needs a `name`, `type`, and `description`.
 | `category_id` | string | Predicted category (if taxonomy enabled) |
 | `category_path` | string | Full path like `"Bearings > Ball Bearings"` |
 | `taxonomy_attributes` | object | Category-specific attributes |
-| `quality_score` | integer | 1-5 score (if `quality_prompt` set) |
-| `quality_result` | object | `{score, explanation, issues, suggestions}` |
 | `taxonomy_attribute_explanations` | object | Per-attribute explanations of how taxonomy values were derived |
 | `review_info` | object | AI reasoning and flags (see below) |
+| `low_confidence_candidates` | array | Plausible but non-canonical candidates when enabled |
+| `low_confidence_fields` | array | Fields that should be highlighted as low confidence |
 
 ---
 
@@ -523,22 +552,50 @@ const result = await response.json();
 | `credits_used` | integer | Credits charged for completed items |
 
 <Note>
-You can only cancel jobs with status `running`. Completed or already-cancelled jobs return an error.
+Cancellation is intended for active jobs. Jobs that are already cancelled return a successful cancelled response; completed jobs may return an error.
 </Note>
 
 ---
 
-## Concurrency Limits
+### POST /public/enrich/{job_id}/to-catalog
 
-Each organization can run up to **10 concurrent enrichment jobs**. Submitting an 11th job returns `429 Too Many Requests`:
+Create a new catalog from an enrichment run.
 
-```json
-{
-  "detail": "Too many concurrent enrichment jobs (10/10). List running jobs: GET /api/public/enrich/jobs?status=running — Cancel a job: POST /api/public/enrich/{job_id}/cancel"
-}
+```bash
+curl -X POST "https://catalogapi.rastro.ai/api/public/enrich/{job_id}/to-catalog" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Enriched Products"}'
 ```
 
-To unblock yourself:
-1. **List running jobs** — `GET /api/public/enrich/jobs?status=running`
-2. **Cancel** any jobs you no longer need — `POST /api/public/enrich/{job_id}/cancel`
-3. **Retry** your request
+Use this when you ran enrichment first and want to persist the finished results as a new catalog.
+
+---
+
+## Templates, Inference, And Judging
+
+| Endpoint | Description |
+| -------- | ----------- |
+| `GET /public/enrichment-templates` | List enabled enrichment templates available to your organization |
+| `GET /public/enrichment-templates/{template_id}` | Get a template. Supports `include_taxonomy=true` and `taxonomy_format=expanded` or `taxonomy_format=compact` |
+| `POST /public/infer-enrichment` | Infer catalog schema, taxonomy, and web enrichment fields from sample items |
+| `POST /public/infer-schema` | Upload a CSV/Excel file and infer schema plus enrichment config |
+| `POST /public/judge` | Judge rows against a catalog schema or inline schema. Supports per-row image URLs |
+
+Example inference request:
+
+```bash
+curl -X POST "https://catalogapi.rastro.ai/api/public/infer-enrichment" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"Industrial bearings catalog","items":[{"sku":"6205-2RS","name":"Deep Groove Ball Bearing"}]}'
+```
+
+Example judge request:
+
+```bash
+curl -X POST "https://catalogapi.rastro.ai/api/public/judge" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"catalog_id":"cat_123","rows":[{"sku":"A1","title":"Product A"}],"max_rows":50}'
+```

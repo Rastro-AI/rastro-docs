@@ -10,6 +10,14 @@ Include it in every request:
 Authorization: Bearer rastro_pk_...
 ```
 
+Include the organization header when you know the organization ID:
+
+```bash
+X-Organization-Id: org_...
+```
+
+If you omit `X-Organization-Id`, Rastro falls back to the API key or user's primary organization when it can resolve one.
+
 <Note>
 MCP integrations for Codex/Claude use the same API key and only call API endpoints. No direct database credentials are required.
 </Note>

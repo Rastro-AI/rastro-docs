@@ -38,6 +38,14 @@
         "pages": ["catalogs/quickstart", "catalogs/reference", "catalogs/examples"]
       },
       {
+        "group": "Complete API Reference",
+        "openapi": {
+          "source": "api-reference/openapi.json",
+          "directory": "api-reference"
+        },
+        "pages": ["api-reference/overview"]
+      },
+      {
         "group": "MCP (Codex / Claude)",
         "pages": ["mcp/quickstart", "mcp/reference"]
       },
@@ -48,7 +56,18 @@
     ]
   },
   "api": {
-    "baseUrl": "https://catalogapi.rastro.ai/api"
+    "baseUrl": "https://catalogapi.rastro.ai/api",
+    "auth": {
+      "method": "bearer"
+    },
+    "playground": {
+      "mode": "show"
+    },
+    "request": {
+      "example": {
+        "languages": ["bash", "python", "javascript"]
+      }
+    }
   },
   "contextual": {
     "options": ["copy", "view", "chatgpt", "claude"]

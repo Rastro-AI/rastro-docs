@@ -1,0 +1,99 @@
+---
+title: 'Complete API Reference'
+description: 'Every public Rastro endpoint in the current API contract'
+---
+
+All endpoints use this base URL:
+
+```text
+https://catalogapi.rastro.ai/api
+```
+
+Authenticate every request with:
+
+```bash
+Authorization: Bearer YOUR_API_KEY
+```
+
+The machine-readable OpenAPI contract is available at [`/api-reference/openapi.json`](/api-reference/openapi.json). Use the endpoint-specific pages below for examples and workflow guidance, and use the OpenAPI file when generating clients or checking exact request and response schemas.
+
+## Endpoint Matrix
+
+### Enrich
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| `POST` | `/public/enrich` | Start a product enrichment job from inline JSON, uploaded item file, catalog items, or a previous activity |
+| `GET` | `/public/enrich/{job_id}` | Poll an enrichment job and retrieve paginated progressive results |
+| `GET` | `/public/enrich/jobs` | List enrichment jobs for the organization |
+| `POST` | `/public/enrich/{job_id}/cancel` | Cancel a running enrichment job |
+| `POST` | `/public/enrich/{job_id}/to-catalog` | Create a new catalog from an enrichment run |
+| `GET` | `/public/enrichment-templates` | List enabled enrichment templates |
+| `GET` | `/public/enrichment-templates/{template_id}` | Get an enrichment template, optionally with resolved taxonomy |
+| `POST` | `/public/infer-enrichment` | Infer schema, taxonomy, and enrichment fields from sample items |
+| `POST` | `/public/infer-schema` | Infer catalog and enrichment configuration from an uploaded file |
+| `POST` | `/public/judge` | Score catalog rows against a schema and quality prompt |
+
+### Flows
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| `GET` | `/public/workflows` | List runnable workflows |
+| `POST` | `/public/workflows/{workflow_id}/execute` | Execute a workflow with input records |
+| `GET` | `/public/workflows/runs/{workflow_run_id}` | Poll workflow status and paginated results |
+
+### Catalogs
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| `GET` | `/public/catalogs` | List catalogs |
+| `POST` | `/public/catalogs` | Create a catalog |
+| `GET` | `/public/catalogs/{catalog_id}` | Get catalog details |
+| `PUT` | `/public/catalogs/{catalog_id}` | Update catalog settings |
+| `DELETE` | `/public/catalogs/{catalog_id}` | Delete a catalog |
+| `GET` | `/public/catalogs/{catalog_id}/items` | List transformed public catalog items |
+| `POST` | `/public/catalogs/{catalog_id}/items` | Upsert one item by business identifier |
+| `GET` | `/public/catalogs/{catalog_id}/items/{item_id}` | Get one transformed public item by database ID |
+| `PUT` | `/public/catalogs/{catalog_id}/items/{item_id}` | Update one item by database ID |
+| `DELETE` | `/public/catalogs/{catalog_id}/items/{item_id}` | Delete one item by database ID |
+| `POST` | `/public/catalogs/{catalog_id}/items/bulk` | Bulk upsert items |
+| `GET` | `/public/catalogs/{catalog_id}/raw-items` | List raw catalog rows without public product transformation |
+| `GET` | `/public/catalogs/{catalog_id}/raw-items/{item_id}` | Get one raw catalog row |
+| `POST` | `/public/catalogs/{catalog_id}/duplicate` | Duplicate a catalog |
+
+### Product Variants
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| `POST` | `/public/catalogs/{catalog_id}/products/{product_id}/items` | Create a variant under a product. `{product_id}` is the parent product item's database ID |
+| `PUT` | `/public/catalogs/{catalog_id}/products/{product_id}` | Update product-level fields on the parent product item. `{product_id}` is the database ID |
+| `POST` | `/public/catalogs/{catalog_id}/products/{product_id}/items/bulk` | Bulk upsert variants under one product. `{product_id}` is the parent product item's database ID |
+
+### Schema And Taxonomy
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| `GET` | `/public/catalogs/{catalog_id}/schema` | Get the current or requested catalog schema version |
+| `POST` | `/public/catalogs/{catalog_id}/schema/fields` | Add one schema field |
+| `PUT` | `/public/catalogs/{catalog_id}/schema/fields/batch` | Add, update, and remove schema fields in one operation |
+| `GET` | `/public/catalogs/{catalog_id}/taxonomy` | Get taxonomy with computed inheritance |
+| `PUT` | `/public/catalogs/{catalog_id}/taxonomy` | Set or replace taxonomy |
+| `DELETE` | `/public/catalogs/{catalog_id}/taxonomy` | Remove taxonomy |
+| `GET` | `/public/catalogs/{catalog_id}/catalog-md` | Get catalog markdown context |
+| `PUT` | `/public/catalogs/{catalog_id}/catalog-md` | Update catalog markdown context |
+| `GET` | `/public/catalogs/{catalog_id}/quality-prompt` | Get the catalog quality prompt |
+| `PUT` | `/public/catalogs/{catalog_id}/quality-prompt` | Update the catalog quality prompt |
+
+### Activities And Snapshots
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| `GET` | `/public/catalogs/{catalog_id}/activities` | List catalog activities |
+| `POST` | `/public/catalogs/{catalog_id}/activities` | Create an activity with staged changes |
+| `POST` | `/public/catalogs/{catalog_id}/activities/custom-transform` | Create a custom transform activity |
+| `POST` | `/public/catalogs/{catalog_id}/activities/{activity_id}/save-workflow` | Save an activity as a workflow |
+| `POST` | `/public/activities/{activity_id}/staged-changes/append` | Append staged changes to an activity |
+| `POST` | `/public/activities/{activity_id}/pending-review` | Mark an activity ready for review |
+| `GET` | `/public/catalogs/{catalog_id}/snapshots` | List catalog snapshots |
+| `POST` | `/public/catalogs/{catalog_id}/snapshots` | Create a catalog snapshot |
+| `POST` | `/public/catalogs/{catalog_id}/snapshots/{snapshot_id}/restore` | Restore a catalog snapshot |
