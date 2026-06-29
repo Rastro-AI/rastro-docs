@@ -33,6 +33,10 @@ catalog_id = response.json()["id"]
 
 Once created, copy your `catalog_id` to use in API calls below.
 
+<Note>
+`unique_id_field` is a required legacy compatibility field on public catalog creation. Keep the actual business key, such as `sku`, in your schema and item data.
+</Note>
+
 ## 2. Add items (bulk)
 
 <CodeGroup>
@@ -98,7 +102,7 @@ console.log(await response.json());
 ```
 
 <Note>
-Item matching for upserts uses the catalog's configured unique ID field (e.g., `sku`). You don't need to pass a `unique_field` parameter — it's set once when the catalog is created.
+There is no `unique_field` query parameter. Put your business key fields, such as `sku`, directly in each item object.
 </Note>
 
 ## 3. List your items

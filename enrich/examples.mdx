@@ -20,7 +20,7 @@ response = requests.post(
             {"name": "thread_size", "type": "string", "description": "Thread size specification"},
             {"name": "length", "type": "string", "description": "Screw length"}
         ],
-        "speed": "slow"
+        "speed": "deep"
     }
 )
 print(response.json())
@@ -37,7 +37,7 @@ curl -X POST "https://catalogapi.rastro.ai/api/public/enrich" \
       {"name": "thread_size", "type": "string", "description": "Thread size specification"},
       {"name": "length", "type": "string", "description": "Screw length"}
     ],
-    "speed": "slow"
+    "speed": "deep"
   }'
 ```
 
@@ -64,7 +64,7 @@ response = requests.post(
             {"part_number": "6205-2RS", "name": "Deep Groove Ball Bearing"},
             {"part_number": "6206-2RS", "name": "Deep Groove Ball Bearing"}
         ],
-        "speed": "slow"
+        "speed": "deep"
     }
 )
 print(response.json())
@@ -93,7 +93,7 @@ response = requests.post(
             {"name": "outer_diameter", "type": "string", "description": "Outer diameter in mm"},
             {"name": "width", "type": "string", "description": "Bearing width in mm"}
         ],
-        "speed": "slow"
+        "speed": "deep"
     }
 )
 ```
@@ -116,7 +116,7 @@ response = requests.post(
             {"name": "memory", "type": "string", "description": "Work memory size"}
         ],
         "allowed_domains": ["siemens.com", "automation.siemens.com"],
-        "speed": "slow"
+        "speed": "deep"
     }
 )
 ```
@@ -196,7 +196,7 @@ response = requests.post(
             {"name": "bore_diameter", "type": "string", "description": "Inner diameter"}
         ],
         "async_mode": True,
-        "speed": "slow"
+        "speed": "deep"
     }
 )
 job_id = response.json()["job_id"]
@@ -285,21 +285,21 @@ response = requests.post(
 
 ---
 
-## Quality Scoring
+## Row Judging
 
-Add a quality prompt to get a 1-5 score for each item.
+Use `POST /public/judge` to evaluate rows against a catalog schema and quality prompt. Pass `catalog_id` to reuse the catalog's schema and saved quality prompt, or pass an inline `schema`.
 
 ```python
 response = requests.post(
-    "https://catalogapi.rastro.ai/api/public/enrich",
+    "https://catalogapi.rastro.ai/api/public/judge",
     headers={"Authorization": "Bearer YOUR_API_KEY"},
     json={
-        "items": [{"part_number": "6205-2RS"}],
-        "output_schema": [
-            {"name": "bore_diameter", "type": "string", "description": "Inner diameter"},
-            {"name": "load_rating", "type": "string", "description": "Dynamic load rating"}
+        "catalog_id": "cat_123",
+        "rows": [
+            {"part_number": "6205-2RS", "bore_diameter": "25 mm", "load_rating": ""}
         ],
-        "quality_prompt": "Evaluate if product has complete specs for procurement"
+        "prompt": "Evaluate if product has complete specs for procurement",
+        "max_rows": 50
     }
 )
 ```
@@ -308,20 +308,17 @@ response = requests.post(
 
 ```json
 {
-  "after_data": {
-    "bore_diameter": "25 mm",
-    "load_rating": "14.8 kN",
-    "sources": {
-      "bore_diameter": ["https://skf.com/products/bearings/6205-2RS"],
-      "load_rating": ["https://skf.com/products/bearings/6205-2RS"]
+  "judgments": [
+    {
+      "row_index": 0,
+      "decision": "review_required",
+      "reasons": ["Missing dynamic load rating"],
+      "field_issues": ["load_rating is blank"]
     }
-  },
-  "quality_score": 4,
-  "quality_result": {
-    "score": 4,
-    "explanation": "Complete dimensions, missing load ratings",
-    "issues": ["No dynamic load rating"],
-    "suggestions": ["Add C and C0 load ratings"]
+  ],
+  "meta": {
+    "model": "fast",
+    "rows_judged": 1
   }
 }
 ```
@@ -330,14 +327,14 @@ response = requests.post(
 
 ## Dry Runs
 
-Use `max_rows` to test with a subset before processing everything.
+Use `max_rows` to test with a subset before processing everything. Inline JSON requests can include up to 1,000 items; for larger datasets, use the multipart upload pattern from the reference.
 
 ```python
 response = requests.post(
     "https://catalogapi.rastro.ai/api/public/enrich",
     headers={"Authorization": "Bearer YOUR_API_KEY"},
     json={
-        "items": large_item_list,  # 1000+ items
+        "items": sample_items,  # Up to 1,000 inline items
         "output_schema": schema,
         "max_rows": 10  # Only process first 10
     }
@@ -371,7 +368,7 @@ class RastroClient:
     def _headers(self):
         return {"Authorization": f"Bearer {self.api_key}"}
 
-    def enrich(self, items, output_schema, speed="slow", **kwargs):
+    def enrich(self, items, output_schema, speed="deep", **kwargs):
         response = requests.post(
             f"{self.base_url}/public/enrich",
             headers=self._headers(),
@@ -404,7 +401,7 @@ class RastroClient:
             page += 1
         return all_results, resp
 
-    def enrich_async(self, items, output_schema, speed="slow", poll_interval=5, **kwargs):
+    def enrich_async(self, items, output_schema, speed="deep", poll_interval=5, **kwargs):
         # Start job
         result = self.enrich(items, output_schema, speed, async_mode=True, **kwargs)
         job_id = result["job_id"]
@@ -469,13 +466,16 @@ interface OutputField {
 }
 
 interface EnrichOptions {
-  speed?: "fast" | "medium" | "slow" | "cheap";
+  speed?: "fast" | "medium" | "deep" | "slow" | "ultra_slow" | "cheap";
   async_mode?: boolean;
   allowed_domains?: string[];
+  blocked_domains?: string[];
   web_search?: boolean;
   predict_taxonomy?: boolean;
+  predict_taxonomy_attributes?: boolean;
   taxonomy?: object;
-  quality_prompt?: string;
+  template_id?: string;
+  catalog_id?: string;
 }
 
 async function enrich(
@@ -550,7 +550,7 @@ const result = await enrich(
     { name: "bore_diameter", type: "string", description: "Inner diameter" },
     { name: "manufacturer", type: "string", description: "Brand name" }
   ],
-  { speed: "slow" }
+  { speed: "deep" }
 );
 
 for (const item of result.results) {

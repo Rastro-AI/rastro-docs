@@ -39,7 +39,8 @@ items = requests.get(
 ).json()
 
 for item in items["items"]:
-    print(f"  {item['sku']}: {item['name']} - ${item['price']}")
+    data = item["data"]
+    print(f"  {data['sku']}: {data['name']} - ${data['price']}")
 
 # 4. Update an item
 item_id = items["items"][0]["id"]
@@ -49,7 +50,8 @@ updated = requests.put(
     json={"price": 10.99}
 ).json()
 
-print(f"Updated {updated['sku']} price to ${updated['price']}")
+updated_data = updated["data"]
+print(f"Updated {updated_data['sku']} price to ${updated_data['price']}")
 
 # 5. Get single item
 item = requests.get(
@@ -75,7 +77,7 @@ BASE_URL = "https://catalogapi.rastro.ai/api"
 
 headers = {"Authorization": f"Bearer {API_KEY}"}
 
-def enrich_catalog(catalog_id, items, speed="slow"):
+def enrich_catalog(catalog_id, items, speed="deep"):
     # Start enrichment using the catalog's schema
     response = requests.post(
         f"{BASE_URL}/public/enrich",
@@ -149,11 +151,11 @@ class CatalogClient:
         return response.json()["catalogs"]
 
     # Item operations
-    def list_items(self, catalog_id, page=1, limit=100):
+    def list_items(self, catalog_id, offset=0, limit=100):
         response = requests.get(
             f"{self.base_url}/public/catalogs/{catalog_id}/items",
             headers=self._headers(),
-            params={"page": page, "limit": limit}
+            params={"offset": offset, "limit": limit}
         )
         return response.json()
 
@@ -181,7 +183,7 @@ class CatalogClient:
         return response.json()
 
     # Enrichment (uses the Enrich API with catalog_id)
-    def start_enrichment(self, catalog_id, items, speed="slow", **kwargs):
+    def start_enrichment(self, catalog_id, items, speed="deep", **kwargs):
         response = requests.post(
             f"{self.base_url}/public/enrich",
             headers=self._headers(),
@@ -230,13 +232,14 @@ client.bulk_upsert(catalog_id, items)
 result = client.enrich_and_wait(
     catalog_id,
     items=items,
-    speed="slow"
+    speed="deep"
 )
 
 # List enriched items
 catalog_items = client.list_items(catalog_id)
 for item in catalog_items["items"]:
-    print(f"{item['sku']}: bore={item.get('bore_diameter', 'N/A')}")
+    data = item["data"]
+    print(f"{data['sku']}: bore={data.get('bore_diameter', 'N/A')}")
 ```
 
 ---
@@ -271,9 +274,9 @@ class CatalogClient {
   }
 
   // Item operations
-  async listItems(catalogId: string, page = 1, limit = 100) {
+  async listItems(catalogId: string, offset = 0, limit = 100) {
     const response = await fetch(
-      `${BASE_URL}/public/catalogs/${catalogId}/items?page=${page}&limit=${limit}`,
+      `${BASE_URL}/public/catalogs/${catalogId}/items?offset=${offset}&limit=${limit}`,
       { headers: this.headers() }
     );
     return response.json();
@@ -373,12 +376,12 @@ await client.bulkUpsert(catalogId, items);
 const result = await client.enrichAndWait(
   catalogId,
   items,
-  { speed: "slow" }
+  { speed: "deep" }
 );
 
 // List enriched items
 const enrichedItems = await client.listItems(catalogId);
 for (const item of enrichedItems.items) {
-  console.log(`${item.sku}: bore=${item.bore_diameter || "N/A"}`);
+  console.log(`${item.data.sku}: bore=${item.data.bore_diameter || "N/A"}`);
 }
 ```

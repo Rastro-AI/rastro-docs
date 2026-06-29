@@ -94,18 +94,20 @@ Define fields with units, enums, arrays, and validation constraints. Rastro extr
 }
 ```
 
-### Quality Scoring
+### Row Judging
 
-Get a 1-5 readiness score for each item based on your criteria. Identify incomplete records before they hit production.
+Judge rows against your catalog schema and quality prompt. Identify incomplete records before they hit production.
 
 ```json
 {
-  "quality_score": 4,
-  "quality_result": {
-    "explanation": "Complete specs, missing datasheet URL",
-    "issues": ["No datasheet link"],
-    "suggestions": ["Add manufacturer datasheet"]
-  }
+  "judgments": [
+    {
+      "row_index": 0,
+      "decision": "review_required",
+      "reasons": ["Complete specs, missing datasheet URL"],
+      "field_issues": ["datasheet_url is blank"]
+    }
+  ]
 }
 ```
 
