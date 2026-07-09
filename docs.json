@@ -23,7 +23,7 @@
     "groups": [
       {
         "group": "Getting Started",
-        "pages": ["introduction", "quickstart", "authentication"]
+        "pages": ["introduction", "quickstart", "authentication", "credits"]
       },
       {
         "group": "Enrich API",
