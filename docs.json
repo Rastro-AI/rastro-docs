@@ -38,6 +38,10 @@
         "pages": ["catalogs/quickstart", "catalogs/reference", "catalogs/examples"]
       },
       {
+        "group": "Photo Studio",
+        "pages": ["photo-studio/quickstart", "photo-studio/reference"]
+      },
+      {
         "group": "Complete API Reference",
         "openapi": {
           "source": "api-reference/openapi.json",
